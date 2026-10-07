@@ -3,7 +3,9 @@
 mod color;
 mod derive;
 mod geom;
+mod legend;
 mod pane;
+mod picker;
 mod ring;
 mod scale;
 mod side_rail;
@@ -18,7 +20,12 @@ pub use color::{
 };
 pub use derive::{bar_tokens, derive_tokens, theme_tokens, uses_brief, ThemeSource};
 pub use geom::Rect;
+pub use legend::{legend_keys, LegendChip, LegendPaint, LegendRun};
 pub use pane::{activity_header_rects, pane_handle_rect, status_width, PaneStatus};
+pub use picker::{
+    theme_picker_hit, theme_picker_layout, theme_picker_visible_rows, ThemePickerHit,
+    ThemePickerLayout,
+};
 pub use ring::RingSweep;
 pub use scale::{
     scale_px, side_chip_px, side_cols_for_px, side_footer_px, side_gap_px, side_header_px,
