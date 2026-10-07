@@ -45,8 +45,52 @@ pub fn theme_picker_layout(
     window_w: usize,
     window_h: usize,
 ) -> Option<ThemePickerLayout> {
-    let _ = (scale_milli, row_count, scroll, window_w, window_h);
-    todo!()
+    let p = |design: f32| crate::scale_px(design, scale_milli);
+    if window_w < p(320.0) || window_h < p(220.0) {
+        return None;
+    }
+    let margin = p(THEME_PAD);
+    let panel_w = p(THEME_DIALOG_W).min(window_w.saturating_sub(margin * 2));
+    let panel_h = p(THEME_DIALOG_H).min(window_h.saturating_sub(margin * 2));
+    let panel = Rect::new(
+        window_w.saturating_sub(panel_w) / 2,
+        window_h.saturating_sub(panel_h) / 2,
+        panel_w,
+        panel_h,
+    );
+    let pad = p(THEME_PAD);
+    let header_h = p(THEME_HEADER_H);
+    let footer_h = p(THEME_FOOTER_H);
+    let list = Rect::new(
+        panel.x.saturating_add(pad),
+        panel.y.saturating_add(header_h),
+        panel.w.saturating_sub(pad.saturating_mul(2)),
+        panel.h.saturating_sub(header_h.saturating_add(footer_h)),
+    );
+    let row_h = p(THEME_ROW_H).max(1);
+    let visible_rows = list.h / row_h;
+    if visible_rows == 0 {
+        return None;
+    }
+    let close_size = p(24.0).max(16);
+    let close = Rect::new(
+        panel.right().saturating_sub(pad).saturating_sub(close_size),
+        panel
+            .y
+            .saturating_add(header_h.saturating_sub(close_size) / 2),
+        close_size,
+        close_size,
+    );
+    let max_scroll = row_count.saturating_sub(visible_rows);
+    Some(ThemePickerLayout {
+        panel,
+        close,
+        list,
+        footer_y: panel.y.saturating_add(panel.h).saturating_sub(footer_h),
+        row_h,
+        visible_rows,
+        scroll: scroll.min(max_scroll),
+    })
 }
 
 /// Returns the number of visible theme rows.
@@ -56,8 +100,11 @@ pub fn theme_picker_visible_rows(
     window_w: usize,
     window_h: usize,
 ) -> usize {
-    let _ = (scale_milli, theme_count, window_w, window_h);
-    todo!()
+    if theme_count == 0 {
+        return 0;
+    }
+    theme_picker_layout(scale_milli, theme_count, 0, window_w, window_h)
+        .map_or(0, |layout| layout.visible_rows.min(theme_count).max(1))
 }
 
 /// Hit-tests the close control or an absolute scrolled row.
@@ -70,8 +117,17 @@ pub fn theme_picker_hit(
     x: usize,
     y: usize,
 ) -> Option<ThemePickerHit> {
-    let _ = (scale_milli, row_count, scroll, window_w, window_h, x, y);
-    todo!()
+    let layout = theme_picker_layout(scale_milli, row_count, scroll, window_w, window_h)?;
+    if layout.close.contains(x, y) {
+        return Some(ThemePickerHit::Close);
+    }
+    if !layout.list.contains(x, y) {
+        return None;
+    }
+    let index = layout
+        .scroll
+        .saturating_add(y.saturating_sub(layout.list.y) / layout.row_h);
+    (index < row_count).then_some(ThemePickerHit::Row(index))
 }
 
 #[cfg(test)]
