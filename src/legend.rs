@@ -173,6 +173,58 @@ mod tests {
     }
 
     #[test]
+    fn legend_text_runs_and_captions_keep_their_positions() {
+        let text = legend_keys(
+            &OneCell,
+            1000,
+            &[LegendRun::Text("Prismattyc [1]".to_owned())],
+            80,
+            48,
+            1,
+        );
+        assert_eq!(
+            text.texts,
+            vec![LegendText {
+                rect: Rect::new(12, 26, 14, 22),
+                text: "Prismattyc [1]".to_owned(),
+            }]
+        );
+        let omitted = legend_keys(
+            &OneCell,
+            1000,
+            &[LegendRun::Text("Prismattyc [1]".to_owned())],
+            20,
+            48,
+            1,
+        );
+        assert!(omitted.texts.is_empty());
+
+        let mixed = legend_keys(
+            &OneCell,
+            1000,
+            &[
+                LegendRun::Text("abc".to_owned()),
+                LegendRun::Keys {
+                    caps: vec!["K".to_owned()],
+                    caption: "cap".to_owned(),
+                },
+            ],
+            80,
+            48,
+            1,
+        );
+        assert_eq!(mixed.texts[0].rect, Rect::new(12, 26, 3, 22));
+        assert_eq!(mixed.chips[0].rect, Rect::new(27, 28, 13, 18));
+        assert_eq!(
+            mixed.caption_rects,
+            vec![LegendText {
+                rect: Rect::new(46, 26, 3, 22),
+                text: "cap".to_owned(),
+            }]
+        );
+    }
+
+    #[test]
     fn legend_run_that_fits_keeps_every_group() {
         let paint = legend_keys(&OneCell, 1000, &runs(), 120, 48, 1);
         assert_eq!(
