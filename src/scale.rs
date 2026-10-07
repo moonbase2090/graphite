@@ -85,12 +85,12 @@ pub fn side_pad_px(scale_milli: u32) -> usize {
 
 /// Returns a scaled side-column scrollbar width.
 pub fn side_thumb_px(scale_milli: u32) -> usize {
-    scale_px(SIDE_THUMB_W, scale_milli)
+    scale_px(SIDE_THUMB_W, scale_milli).max(1)
 }
 
 /// Returns a scaled minimum side-column scrollbar thumb height.
 pub fn side_thumb_min_px(scale_milli: u32) -> usize {
-    scale_px(SIDE_THUMB_MIN_H, scale_milli)
+    scale_px(SIDE_THUMB_MIN_H, scale_milli).max(1)
 }
 
 /// Returns the physical side-column width for a column setting.
