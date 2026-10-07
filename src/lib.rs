@@ -3,6 +3,7 @@
 mod color;
 mod geom;
 mod scale;
+mod tabs_bar;
 mod text;
 mod tokens;
 
@@ -17,6 +18,9 @@ pub use scale::{
     PANE_PAD, PANE_RADIUS, RAIL_H, SIDEBAR_W, SIDE_CHIP_H, SIDE_CHIP_H_COMPACT, SIDE_FOOTER_H,
     SIDE_GAP, SIDE_HEADER_H, SIDE_PAD, SIDE_RAIL_DEFAULT_COLS, SIDE_RAIL_W, SIDE_THUMB_MIN_H,
     SIDE_THUMB_W, TABS_BAR_H, WINDOW_PAD,
+};
+pub use tabs_bar::{
+    bar_hit, bar_layout, shift_bar, BarHit, BarLayout, Dot, DropTarget, TabSlot, TabText,
 };
 pub use text::{ellipsize, Face, TextMetrics};
 pub use tokens::{tokens, Rgb, ThemeVariant, Tokens, DARK, LIGHT};
