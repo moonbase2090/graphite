@@ -232,18 +232,15 @@ pub fn sidebar_header_layout(scale_milli: u32, span: Rect) -> SidebarHeaderLayou
 /// Computes the sidebar collapse/expand toggle rectangle.
 pub fn sidebar_toggle_rect(scale_milli: u32, column: Rect, head: Rect, dock_right: bool) -> Rect {
     let p = |design: f32| crate::scale_px(design, scale_milli);
-    let size = p(18.0).max(12).min(column.w);
+    let size = p(18.0).clamp(12, column.w.max(12));
+    let inset = p(10.0);
+    let y = head.y + head.h.saturating_sub(size) / 2;
     let x = if dock_right {
-        column.x.saturating_add(p(10.0))
+        column.x.saturating_add(inset)
     } else {
-        column.right().saturating_sub(p(10.0)).saturating_sub(size)
+        column.right().saturating_sub(inset.saturating_add(size))
     };
-    Rect::new(
-        x,
-        head.y.saturating_add(head.h.saturating_sub(size) / 2),
-        size,
-        size,
-    )
+    Rect::new(x, y, size.min(column.w), size.min(head.h.max(1)))
 }
 
 /// Resolves a physical point with thumb-first sidebar hit precedence.
