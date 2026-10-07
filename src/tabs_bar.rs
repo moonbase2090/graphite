@@ -1,6 +1,25 @@
 //! Renderer-independent tabs-bar layout and hit testing.
 
-use crate::{Face, Rect, TextMetrics};
+use crate::{ellipsize, scale_px, Face, Rect, TextMetrics, TABS_BAR_H};
+
+const BAR_PAD_X: f32 = 10.0;
+const CHIP_H: f32 = 30.0;
+const CHIP_PAD_X: f32 = 12.0;
+const CHIP_GAP: f32 = 4.0;
+const DOT: f32 = 7.0;
+const INNER_GAP: f32 = 8.0;
+const CLOSE_W: f32 = 16.0;
+const CLOSE_END: f32 = 4.0;
+const DROPDOWN_LABEL_MAX: f32 = 180.0;
+const TAB_LABEL_MAX: f32 = 220.0;
+const TAB_LABEL_MIN: f32 = 36.0;
+const PLUS_W: f32 = 30.0;
+const CMD_W: f32 = 260.0;
+const ICON: f32 = 14.0;
+const TAB_TEXT: f32 = 13.0;
+const META_TEXT: f32 = 12.0;
+const PILL_TEXT: f32 = 11.0;
+const PILL_PAD_X: f32 = 6.0;
 
 /// Status dot shown in a tab chip.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -111,6 +130,36 @@ pub struct BarLayout {
     pub scale_milli: u32,
 }
 
+fn scaled(design: f32, scale_milli: u32) -> f32 {
+    design * scale_milli as f32 / 1000.0
+}
+
+fn physical(design: f32, scale_milli: u32) -> usize {
+    scale_px(design, scale_milli)
+}
+
+fn chip_width<M: TextMetrics + ?Sized>(
+    metrics: &M,
+    scale_milli: u32,
+    tab: &TabText,
+    label_w: f32,
+) -> f32 {
+    let s = |design| scaled(design, scale_milli);
+    let mut width = s(CHIP_PAD_X) + s(DOT) + s(INNER_GAP) + label_w;
+    if let Some(meta) = &tab.meta {
+        width += s(INNER_GAP) + metrics.width(Face::Regular, s(META_TEXT), meta);
+    }
+    if tab.attention {
+        width += s(INNER_GAP) + pill_width(metrics, scale_milli);
+    }
+    width + s(INNER_GAP) + s(CLOSE_W) + s(CLOSE_END)
+}
+
+fn pill_width<M: TextMetrics + ?Sized>(metrics: &M, scale_milli: u32) -> f32 {
+    let s = |design| scaled(design, scale_milli);
+    metrics.width(Face::SemiBold, s(PILL_TEXT), "needs you") + 2.0 * s(PILL_PAD_X)
+}
+
 /// Lays out the tabs bar across `width` pixels at row `y`.
 pub fn bar_layout<M: TextMetrics + ?Sized>(
     metrics: &M,
@@ -121,20 +170,175 @@ pub fn bar_layout<M: TextMetrics + ?Sized>(
     tabs: &[TabText],
     chord: &str,
 ) -> BarLayout {
-    let _ = (metrics, scale_milli, width, y, space_label, tabs, chord);
-    todo!()
+    let s = |design| scaled(design, scale_milli);
+    let p = |design| physical(design, scale_milli);
+    let bar = Rect::new(0, y, width, TABS_BAR_H.px(scale_milli));
+    let chip_h = p(CHIP_H).min(bar.h);
+    let chip_y = y + (bar.h - chip_h) / 2;
+    let mut x = p(BAR_PAD_X);
+
+    let space_label = ellipsize(
+        metrics,
+        Face::SemiBold,
+        s(TAB_TEXT),
+        space_label,
+        s(DROPDOWN_LABEL_MAX),
+    );
+    let dropdown_w = (s(10.0)
+        + s(ICON)
+        + s(INNER_GAP)
+        + metrics.width(Face::SemiBold, s(TAB_TEXT), &space_label)
+        + s(INNER_GAP)
+        + s(10.0)
+        + s(10.0))
+    .ceil() as usize;
+    let dropdown = Rect::new(x, chip_y, dropdown_w, chip_h);
+    x = x.saturating_add(dropdown_w).saturating_add(p(6.0));
+    let divider_x = x;
+    x = x.saturating_add(1).saturating_add(p(6.0));
+
+    let right_edge = width.saturating_sub(p(BAR_PAD_X));
+    let cmd_w = p(CMD_W);
+    let plus_w = p(PLUS_W);
+    let gap = p(CHIP_GAP);
+    let fits = |label_cap: f32, command: bool| -> bool {
+        let tabs_w: f32 = tabs
+            .iter()
+            .map(|tab| {
+                let label_w = metrics
+                    .width(Face::Regular, s(TAB_TEXT), &tab.label)
+                    .min(label_cap);
+                chip_width(metrics, scale_milli, tab, label_w).ceil() + gap as f32
+            })
+            .sum();
+        let end = x as f32 + tabs_w + plus_w as f32;
+        let limit = if command {
+            right_edge.saturating_sub(cmd_w.saturating_add(p(INNER_GAP))) as f32
+        } else {
+            right_edge as f32
+        };
+        end <= limit
+    };
+
+    let mut command = cmd_w
+        .saturating_add(p(INNER_GAP))
+        .saturating_add(x)
+        .saturating_add(plus_w)
+        <= right_edge;
+    if command && !fits(s(TAB_LABEL_MAX), true) {
+        command = fits(s(TAB_LABEL_MIN), true);
+    }
+
+    let mut cap = s(TAB_LABEL_MAX);
+    if !fits(cap, command) {
+        let (mut lo, mut hi) = (s(TAB_LABEL_MIN), cap);
+        for _ in 0..12 {
+            let mid = (lo + hi) / 2.0;
+            if fits(mid, command) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        cap = lo;
+    }
+
+    let tab_limit = if command {
+        right_edge.saturating_sub(cmd_w.saturating_add(p(INNER_GAP)))
+    } else {
+        right_edge
+    }
+    .saturating_sub(plus_w);
+    let mut slots = Vec::with_capacity(tabs.len());
+    for tab in tabs {
+        let label = ellipsize(metrics, Face::Regular, s(TAB_TEXT), &tab.label, cap);
+        let label_w = metrics.width(Face::Regular, s(TAB_TEXT), &label);
+        let chip_w = chip_width(metrics, scale_milli, tab, label_w).ceil() as usize;
+        if x.saturating_add(chip_w) > tab_limit {
+            break;
+        }
+        let chip = Rect::new(x, chip_y, chip_w, chip_h);
+        let close_w = p(CLOSE_W);
+        let close = Rect::new(
+            chip.right()
+                .saturating_sub(p(CLOSE_END).saturating_add(close_w)),
+            chip_y,
+            close_w,
+            chip_h,
+        );
+        slots.push(TabSlot {
+            chip,
+            close,
+            label,
+            meta: tab.meta.clone(),
+            dot: tab.dot,
+            attention: tab.attention,
+            selected: tab.selected,
+        });
+        x = x.saturating_add(chip_w).saturating_add(gap);
+    }
+    let plus = Rect::new(x, chip_y, plus_w, chip_h);
+    let command =
+        command.then(|| Rect::new(right_edge.saturating_sub(cmd_w), chip_y, cmd_w, chip_h));
+    BarLayout {
+        bar,
+        dropdown,
+        space_label,
+        divider_x,
+        tabs: slots,
+        plus,
+        command,
+        chord: chord.to_owned(),
+        scale_milli,
+    }
 }
 
 /// Shifts every hit-testable part of a layout horizontally by `dx` pixels.
 pub fn shift_bar(mut layout: BarLayout, dx: usize) -> BarLayout {
-    let _ = (&mut layout, dx);
-    todo!()
+    if dx == 0 {
+        return layout;
+    }
+    let shift = |rect: &mut Rect| {
+        rect.x = rect.x.saturating_add(dx);
+    };
+    shift(&mut layout.bar);
+    shift(&mut layout.dropdown);
+    layout.divider_x = layout.divider_x.saturating_add(dx);
+    for tab in &mut layout.tabs {
+        shift(&mut tab.chip);
+        shift(&mut tab.close);
+    }
+    shift(&mut layout.plus);
+    if let Some(command) = layout.command.as_mut() {
+        shift(command);
+    }
+    layout
 }
 
 /// Returns the core hit target under a window pixel.
 pub fn bar_hit(layout: &BarLayout, px: usize, py: usize, reserve_end: bool) -> Option<BarHit> {
-    let _ = (layout, px, py, reserve_end);
-    todo!()
+    if !layout.bar.contains(px, py) {
+        return None;
+    }
+    if layout.dropdown.contains(px, py) {
+        return Some(BarHit::SpaceMenu);
+    }
+    for (index, tab) in layout.tabs.iter().enumerate() {
+        if tab.chip.contains(px, py) {
+            return Some(BarHit::Tab {
+                index,
+                close: tab.close.contains(px, py),
+            });
+        }
+    }
+    if layout.plus.contains(px, py) {
+        return Some(BarHit::NewTab);
+    }
+    if layout.command.is_some_and(|rect| rect.contains(px, py)) {
+        return Some(BarHit::Command);
+    }
+    let after_tabs = px >= layout.plus.x;
+    (reserve_end && after_tabs).then_some(BarHit::EmptyEnd)
 }
 
 #[cfg(test)]
