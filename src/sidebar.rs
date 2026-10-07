@@ -441,6 +441,41 @@ mod tests {
     }
 
     #[test]
+    fn sidebar_toggle_clips_to_header_and_column_bounds() {
+        let short_column = Rect::new(0, 0, 256, 10);
+        let short_toggle = sidebar_toggle_rect(1000, short_column, short_column, false);
+        assert_eq!(short_toggle, Rect::new(228, 0, 18, 10));
+        assert_eq!(
+            sidebar_hit(
+                &[],
+                &[Rect::default(); 3],
+                &[Rect::default(); 3],
+                None,
+                short_toggle,
+                230,
+                15,
+            ),
+            None
+        );
+
+        let narrow = Rect::new(0, 0, 5, 44);
+        let narrow_toggle = sidebar_toggle_rect(1000, narrow, narrow, false);
+        assert_eq!(narrow_toggle, Rect::new(0, 16, 5, 12));
+        assert_eq!(
+            sidebar_hit(
+                &[],
+                &[Rect::default(); 3],
+                &[Rect::default(); 3],
+                None,
+                narrow_toggle,
+                2,
+                20,
+            ),
+            Some(SidebarHit::Toggle)
+        );
+    }
+
+    #[test]
     fn sidebar_max_scroll_is_the_last_page_offset() {
         assert_eq!(sidebar_max_scroll(1000, 600, 4), 0);
         assert_eq!(sidebar_max_scroll(1000, 600, 60), 41);
