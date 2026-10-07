@@ -159,6 +159,14 @@ mod tests {
     }
 
     #[test]
+    fn small_scale_scrollbar_dimensions_keep_the_source_floor() {
+        for scale_milli in [0, 1, 20, 27, 62] {
+            assert_eq!(side_thumb_px(scale_milli), 1, "scale {scale_milli}");
+            assert_eq!(side_thumb_min_px(scale_milli), 1, "scale {scale_milli}");
+        }
+    }
+
+    #[test]
     fn side_rail_matches_the_default_width_and_scale() {
         assert_eq!(side_rail_px(1000, 18), 220);
         assert_eq!(side_rail_px(2000, 18), 440);
