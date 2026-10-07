@@ -5,6 +5,7 @@ mod derive;
 mod geom;
 mod scale;
 mod side_rail;
+mod sidebar;
 mod tabs_bar;
 mod text;
 mod tokens;
@@ -25,6 +26,11 @@ pub use scale::{
 pub use side_rail::{
     rail_chip_width, rail_close_width, rail_plus_width, RAIL_CHIP_H, RAIL_CHIP_PAD_X, RAIL_CLOSE_W,
     RAIL_DOT, RAIL_TEXT,
+};
+pub use sidebar::{
+    sidebar_header_layout, sidebar_hit, sidebar_layout, sidebar_max_scroll, sidebar_rows_in_view,
+    sidebar_toggle_rect, SidebarHeaderLayout, SidebarHit, SidebarLayout, SidebarRow,
+    SIDEBAR_ACTIONS, SIDEBAR_ARRANGE,
 };
 pub use tabs_bar::{
     bar_hit, bar_layout, drop_target_rect, shift_bar, BarHit, BarLayout, Dot, DropTarget, TabSlot,
