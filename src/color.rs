@@ -3,44 +3,124 @@
 use crate::tokens::{Rgb, ThemeVariant, Tokens};
 
 /// A background preset for the tabs and spaces bars.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum BarColor {
+    #[default]
     Graphite,
     Harbor,
     Moss,
     Plum,
 }
 
-pub fn mix_rgb(_background: Rgb, _foreground: Rgb, _foreground_weight: u16) -> Rgb {
-    [0, 0, 0]
+pub fn mix_rgb(background: Rgb, foreground: Rgb, foreground_weight: u16) -> Rgb {
+    let background_weight = 256u16.saturating_sub(foreground_weight);
+    [
+        ((u16::from(background[0]) * background_weight
+            + u16::from(foreground[0]) * foreground_weight)
+            / 256) as u8,
+        ((u16::from(background[1]) * background_weight
+            + u16::from(foreground[1]) * foreground_weight)
+            / 256) as u8,
+        ((u16::from(background[2]) * background_weight
+            + u16::from(foreground[2]) * foreground_weight)
+            / 256) as u8,
+    ]
 }
 
-pub fn relative_luminance(_rgb: Rgb) -> f32 {
-    0.0
+/// WCAG relative luminance of an sRGB color.
+pub fn relative_luminance(rgb: Rgb) -> f32 {
+    let linear = |channel: u8| {
+        let channel = f32::from(channel) / 255.0;
+        if channel <= 0.039_28 {
+            channel / 12.92
+        } else {
+            ((channel + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    0.2126 * linear(rgb[0]) + 0.7152 * linear(rgb[1]) + 0.0722 * linear(rgb[2])
 }
 
-pub fn contrast_ratio(_a: Rgb, _b: Rgb) -> f32 {
-    1.0
+/// WCAG contrast ratio between two colors (1.0 through 21.0).
+pub fn contrast_ratio(a: Rgb, b: Rgb) -> f32 {
+    let (a, b) = (relative_luminance(a), relative_luminance(b));
+    let (high, low) = if a > b { (a, b) } else { (b, a) };
+    (high + 0.05) / (low + 0.05)
 }
 
-pub fn bar_fills(_bar: BarColor, _variant: ThemeVariant) -> (Rgb, Rgb) {
-    ([0, 0, 0], [0, 0, 0])
+/// Tabs-bar and spaces-bar fills for a preset and theme variant.
+pub fn bar_fills(bar: BarColor, variant: ThemeVariant) -> (Rgb, Rgb) {
+    use BarColor::{Graphite, Harbor, Moss, Plum};
+    use ThemeVariant::{Dark, Light};
+
+    match (bar, variant) {
+        (Graphite, Dark) => ([0x15, 0x18, 0x1d], [0x0d, 0x0f, 0x12]),
+        (Graphite, Light) => ([0xee, 0xf0, 0xf3], [0xe4, 0xe7, 0xec]),
+        (Harbor, Dark) => ([0x15, 0x21, 0x31], [0x0e, 0x17, 0x22]),
+        (Harbor, Light) => ([0xe3, 0xed, 0xf8], [0xd6, 0xe3, 0xf2]),
+        (Moss, Dark) => ([0x17, 0x22, 0x1b], [0x0f, 0x17, 0x12]),
+        (Moss, Light) => ([0xe4, 0xf0, 0xe7], [0xd7, 0xe7, 0xdb]),
+        (Plum, Dark) => ([0x21, 0x1a, 0x27], [0x17, 0x12, 0x1c]),
+        (Plum, Light) => ([0xf4, 0xec, 0xe0], [0xeb, 0xe0, 0xcf]),
+    }
 }
 
-pub fn bar_color_name(_bar: Option<BarColor>) -> &'static str {
-    "Theme"
+/// Display name for a preset; `None` means the theme's bars.
+pub fn bar_color_name(bar: Option<BarColor>) -> &'static str {
+    match bar {
+        None => "Theme",
+        Some(BarColor::Graphite) => "Graphite",
+        Some(BarColor::Harbor) => "Harbor",
+        Some(BarColor::Moss) => "Moss",
+        Some(BarColor::Plum) => "Plum",
+    }
 }
 
-pub fn step_bar_color(
-    _bar: Option<BarColor>,
-    _forward: bool,
-    _theme_bars: bool,
-) -> Option<BarColor> {
-    None
+/// Step through the bar-color cycle, wrapping at either end.
+pub fn step_bar_color(bar: Option<BarColor>, forward: bool, theme_bars: bool) -> Option<BarColor> {
+    const PRESETS: [Option<BarColor>; 5] = [
+        None,
+        Some(BarColor::Graphite),
+        Some(BarColor::Harbor),
+        Some(BarColor::Moss),
+        Some(BarColor::Plum),
+    ];
+    let order = if theme_bars {
+        &PRESETS[..]
+    } else {
+        &PRESETS[1..]
+    };
+    let current = bar.or(if theme_bars {
+        None
+    } else {
+        Some(BarColor::Graphite)
+    });
+    let index = order
+        .iter()
+        .position(|preset| *preset == current)
+        .unwrap_or(0);
+    let next = if forward {
+        index.saturating_add(1) % order.len()
+    } else {
+        index.saturating_add(order.len().saturating_sub(1)) % order.len()
+    };
+    order[next]
 }
 
-pub fn accent(_tokens: &Tokens, _focus: Rgb) -> Rgb {
-    [0, 0, 0]
+/// Nudge a focus color until it has the 3:1 non-text contrast required by WCAG.
+pub fn accent(tokens: &Tokens, focus: Rgb) -> Rgb {
+    let mut color = focus;
+    let light_bar = relative_luminance(tokens.bar) > relative_luminance(tokens.text);
+    for _ in 0..24 {
+        if contrast_ratio(color, tokens.bar) >= 3.0 {
+            break;
+        }
+        color = if light_bar {
+            mix_rgb(color, [0, 0, 0], 24)
+        } else {
+            mix_rgb(color, [255, 255, 255], 24)
+        };
+    }
+    color
 }
 
 #[cfg(test)]
@@ -145,6 +225,24 @@ mod tests {
     }
 
     #[test]
+    fn token_text_pairs_meet_wcag_aa() {
+        for tokens in [&DARK, &LIGHT] {
+            for (foreground, background) in [
+                (tokens.text, tokens.bar),
+                (tokens.tab_text, tokens.bar),
+                (tokens.muted, tokens.bar),
+                (tokens.text_strong, tokens.tab_active),
+                (tokens.muted, tokens.tab_active),
+                (tokens.on_attention, tokens.attention),
+                (tokens.muted, tokens.field),
+                (tokens.key_text, tokens.key),
+            ] {
+                assert!(contrast_ratio(foreground, background) >= 4.5);
+            }
+        }
+    }
+
+    #[test]
     fn preset_text_pairs_meet_brief_contrast() {
         let blue = rgb(0x62a8ff);
         for variant in [ThemeVariant::Dark, ThemeVariant::Light] {
@@ -165,19 +263,13 @@ mod tests {
                 };
                 assert!((contrast_ratio(text, tabs) * 10.0).round() >= 67.0);
                 assert!(contrast_ratio(strong, status) >= 4.6);
-                assert!(
-                    contrast_ratio(
-                        accent(
-                            if variant == ThemeVariant::Dark {
-                                &DARK
-                            } else {
-                                &LIGHT
-                            },
-                            blue
-                        ),
-                        tabs
-                    ) >= 3.0
-                );
+                let mut themed = if variant == ThemeVariant::Dark {
+                    DARK
+                } else {
+                    LIGHT
+                };
+                themed.bar = tabs;
+                assert!(contrast_ratio(accent(&themed, blue), tabs) >= 3.0);
             }
         }
     }
