@@ -1,9 +1,15 @@
 //! Core types and algorithms shared by Graphite consumers.
 
+mod color;
 mod geom;
 mod scale;
 mod text;
+mod tokens;
 
+pub use color::{
+    accent, bar_color_name, bar_fills, contrast_ratio, mix_rgb, relative_luminance, step_bar_color,
+    BarColor,
+};
 pub use geom::Rect;
 pub use scale::{
     scale_px, side_chip_px, side_cols_for_px, side_footer_px, side_gap_px, side_header_px,
@@ -13,6 +19,7 @@ pub use scale::{
     SIDE_THUMB_W, TABS_BAR_H, WINDOW_PAD,
 };
 pub use text::{ellipsize, Face, TextMetrics};
+pub use tokens::{tokens, Rgb, ThemeVariant, Tokens, DARK, LIGHT};
 
 #[cfg(test)]
 mod tests {
