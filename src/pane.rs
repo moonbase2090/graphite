@@ -1,6 +1,6 @@
 //! Renderer-independent pane status and header geometry.
 
-use crate::{Dot, Face, Rect, TextMetrics};
+use crate::{Face, Rect, TextMetrics};
 
 const HEADER_PAD_X: f32 = 12.0;
 const HEADER_TEXT: f32 = 12.0;
@@ -28,8 +28,19 @@ pub enum PaneStatus {
 impl PaneStatus {
     /// Chooses status by attention, mail, unseen output, running, focus, then quiet.
     pub fn decide(attention: bool, mail: u32, unseen: bool, running: bool, focused: bool) -> Self {
-        let _ = (attention, mail, unseen, running, focused);
-        todo!()
+        if attention {
+            Self::Attention
+        } else if mail > 0 {
+            Self::Mail(mail)
+        } else if unseen {
+            Self::Unseen
+        } else if running {
+            Self::Running
+        } else if focused {
+            Self::Focused
+        } else {
+            Self::Quiet
+        }
     }
 }
 
@@ -39,8 +50,18 @@ pub fn status_width<M: TextMetrics + ?Sized>(
     scale_milli: u32,
     status: PaneStatus,
 ) -> f32 {
-    let _ = (metrics, scale_milli, status);
-    todo!()
+    let s = |design: f32| design * scale_milli as f32 / 1000.0;
+    let px = s(HEADER_TEXT);
+    match status {
+        PaneStatus::Attention => metrics.width(Face::SemiBold, px, "needs you"),
+        PaneStatus::Mail(count) => {
+            s(14.0) + s(6.0) + metrics.width(Face::Regular, px, &count.to_string())
+        }
+        PaneStatus::Unseen => metrics.width(Face::Regular, px, "new output"),
+        PaneStatus::Running => metrics.width(Face::Regular, px, "running"),
+        PaneStatus::Focused => metrics.width(Face::Regular, px, "focused"),
+        PaneStatus::Quiet => 0.0,
+    }
 }
 
 /// Returns the dot-and-name handle zone in a pane header.
@@ -52,19 +73,63 @@ pub fn pane_handle_rect<M: TextMetrics + ?Sized>(
     status: PaneStatus,
     focus_row: bool,
 ) -> Option<Rect> {
-    let _ = (metrics, scale_milli, slot, name, status, focus_row);
-    todo!()
+    let s = |design: f32| design * scale_milli as f32 / 1000.0;
+    let p = |design: f32| crate::scale_px(design, scale_milli);
+    let head_h = p(PANE_HEADER_H).min(slot.h);
+    if slot.w < p(40.0) || head_h == 0 {
+        return None;
+    }
+    let x0 = slot.x as f32 + s(HEADER_PAD_X);
+    let px = s(HEADER_TEXT);
+    let status_w = status_width(metrics, scale_milli, status);
+    let text_end = slot
+        .right()
+        .saturating_sub(p(HEADER_PAD_X) + status_w.ceil() as usize + p(INNER_GAP))
+        as f32;
+    let text_x = x0 + s(HEADER_DOT) + s(INNER_GAP);
+    let face = if focus_row {
+        Face::SemiBold
+    } else {
+        Face::Regular
+    };
+    let shown = crate::ellipsize(metrics, face, px, name, (text_end - text_x).max(0.0));
+    let end = (text_x + metrics.width(face, px, &shown)).ceil() as usize;
+    let end = end.min(text_end.ceil() as usize).max(x0.ceil() as usize);
+    Some(Rect::new(
+        x0.ceil() as usize,
+        slot.y,
+        end.saturating_sub(x0.ceil() as usize),
+        head_h,
+    ))
 }
 
 /// Returns damage rectangles for the pane-header activity regions.
 pub fn activity_header_rects(scale_milli: u32, slot: Rect) -> Vec<Rect> {
-    let _ = (scale_milli, slot);
-    todo!()
+    let p = |design: f32| crate::scale_px(design, scale_milli);
+    let head_h = p(PANE_HEADER_H).min(slot.h);
+    if slot.w < p(40.0) || head_h == 0 {
+        return Vec::new();
+    }
+    let pad = p(HEADER_PAD_X);
+    let dot = p(HEADER_DOT).max(1);
+    let cx = slot.x.saturating_add(pad).saturating_add(dot / 2);
+    let dot_left = cx.saturating_sub(dot / 2 + 2).max(slot.x);
+    let dot_right = cx.saturating_add(dot / 2 + 3).min(slot.right());
+    let dot_rect = Rect::new(dot_left, slot.y, dot_right.saturating_sub(dot_left), head_h);
+    let status_w = p(168.0).min(slot.w);
+    let status = Rect::new(
+        slot.right().saturating_sub(status_w),
+        slot.y,
+        status_w,
+        head_h,
+    );
+    vec![dot_rect, status]
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Dot;
 
     struct OneCell;
 

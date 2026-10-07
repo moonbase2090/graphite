@@ -12,13 +12,50 @@ pub struct RingSweep {
 impl RingSweep {
     /// Samples a rounded rectangle perimeter without painting or timing.
     pub fn for_slot(slot: Rect, radius: f32) -> Self {
-        let _ = (slot, radius);
-        todo!()
+        let (x0, y0) = (slot.x as f32, slot.y as f32);
+        let (x1, y1) = (slot.right() as f32, (slot.y + slot.h) as f32);
+        let r = radius.min((x1 - x0) / 2.0).min((y1 - y0) / 2.0).max(0.0);
+        let mut samples = Vec::new();
+        use std::f32::consts::{FRAC_PI_2, PI};
+        push_straight(&mut samples, x0 + r, y0, x1 - r, y0);
+        push_arc(&mut samples, x1 - r, y0 + r, r, -FRAC_PI_2, 0.0);
+        push_straight(&mut samples, x1, y0 + r, x1, y1 - r);
+        push_arc(&mut samples, x1 - r, y1 - r, r, 0.0, FRAC_PI_2);
+        push_straight(&mut samples, x1 - r, y1, x0 + r, y1);
+        push_arc(&mut samples, x0 + r, y1 - r, r, FRAC_PI_2, PI);
+        push_straight(&mut samples, x0, y1 - r, x0, y0 + r);
+        push_arc(&mut samples, x0 + r, y0 + r, r, PI, 3.0 * FRAC_PI_2);
+        Self { samples }
     }
 
     /// Returns the number of perimeter samples.
     pub fn len(&self) -> usize {
         self.samples.len()
+    }
+
+    /// Returns whether the perimeter has no samples.
+    pub fn is_empty(&self) -> bool {
+        self.samples.is_empty()
+    }
+}
+
+fn push_straight(samples: &mut Vec<(f32, f32)>, ax: f32, ay: f32, bx: f32, by: f32) {
+    let len = ((bx - ax).powi(2) + (by - ay).powi(2)).sqrt();
+    if len < 0.5 {
+        return;
+    }
+    let steps = len.round() as usize;
+    for i in 0..steps {
+        let t = i as f32 / steps as f32;
+        samples.push((ax + (bx - ax) * t, ay + (by - ay) * t));
+    }
+}
+
+fn push_arc(samples: &mut Vec<(f32, f32)>, cx: f32, cy: f32, r: f32, a0: f32, a1: f32) {
+    let steps = ((a1 - a0).abs() * r).round().max(1.0) as usize;
+    for i in 0..steps {
+        let a = a0 + (a1 - a0) * i as f32 / steps as f32;
+        samples.push((cx + r * a.cos(), cy + r * a.sin()));
     }
 }
 
