@@ -73,34 +73,7 @@ pub fn pane_handle_rect<M: TextMetrics + ?Sized>(
     status: PaneStatus,
     focus_row: bool,
 ) -> Option<Rect> {
-    let s = |design: f32| design * scale_milli as f32 / 1000.0;
-    let p = |design: f32| crate::scale_px(design, scale_milli);
-    let head_h = p(PANE_HEADER_H).min(slot.h);
-    if slot.w < p(40.0) || head_h == 0 {
-        return None;
-    }
-    let x0 = slot.x as f32 + s(HEADER_PAD_X);
-    let px = s(HEADER_TEXT);
-    let status_w = status_width(metrics, scale_milli, status);
-    let text_end = slot
-        .right()
-        .saturating_sub(p(HEADER_PAD_X) + status_w.ceil() as usize + p(INNER_GAP))
-        as f32;
-    let text_x = x0 + s(HEADER_DOT) + s(INNER_GAP);
-    let face = if focus_row {
-        Face::SemiBold
-    } else {
-        Face::Regular
-    };
-    let shown = crate::ellipsize(metrics, face, px, name, (text_end - text_x).max(0.0));
-    let end = (text_x + metrics.width(face, px, &shown)).ceil() as usize;
-    let end = end.min(text_end.ceil() as usize).max(x0.ceil() as usize);
-    Some(Rect::new(
-        x0.ceil() as usize,
-        slot.y,
-        end.saturating_sub(x0.ceil() as usize),
-        head_h,
-    ))
+    todo!()
 }
 
 /// Returns damage rectangles for the pane-header activity regions.
@@ -173,6 +146,26 @@ mod tests {
         assert_eq!(Dot::for_tab(false, true, true), Dot::Working);
         assert_eq!(Dot::for_tab(false, false, true), Dot::Unseen);
         assert_eq!(Dot::for_tab(false, false, false), Dot::Idle);
+    }
+
+    #[test]
+    fn pane_handle_reserves_mail_status_space_before_clipping_name() {
+        let metrics = OneCell;
+        let slot = Rect::new(8, 40, 400, 200);
+        let handle = pane_handle_rect(
+            &metrics,
+            1000,
+            slot,
+            "abcdefghijklmnopqrstuvwxyz0123456789",
+            PaneStatus::Mail(12),
+            false,
+        )
+        .unwrap();
+        // Mail(12): 14px envelope + 6px gap + two count scalars at 12px,
+        // plus the 12px right pad and 8px inner gap, leaves 310px for text.
+        assert_eq!(handle, Rect::new(20, 40, 314, 28));
+        let status_region = Rect::new(364, 40, 44, 28);
+        assert!(handle.right() <= status_region.x);
     }
 
     #[test]
