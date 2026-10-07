@@ -6,48 +6,86 @@ pub type Rgb = [u8; 3];
 /// The two token sets in the Graphite design brief.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeVariant {
+    /// The dark Graphite token set.
     Dark,
+    /// The light Graphite token set.
     Light,
 }
 
 /// Renderer-independent Graphite colors and surfaces.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Tokens {
+    /// Window ground behind the bars and panes.
     pub ground: Rgb,
+    /// Tabs-bar fill.
     pub bar: Rgb,
+    /// Hairline along the tabs bar.
     pub bar_line: Rgb,
+    /// Rule between the Space dropdown and the first tab.
     pub divider: Rgb,
+    /// Active tab chip fill.
     pub tab_active: Rgb,
+    /// Optional outline around the active tab chip on light themes.
     pub tab_active_line: Option<Rgb>,
+    /// Hover fill for tabs and other tab-bar controls.
     pub tab_hover: Rgb,
+    /// Primary text color.
     pub text: Rgb,
+    /// Strong text color for emphasized labels.
     pub text_strong: Rgb,
+    /// Muted text color.
     pub muted: Rgb,
+    /// Tab-label text color.
     pub tab_text: Rgb,
+    /// Working-status color.
     pub working: Rgb,
+    /// Unseen-output color.
     pub unseen: Rgb,
+    /// Attention-status color.
     pub attention: Rgb,
+    /// Text color placed on an attention-status fill.
     pub on_attention: Rgb,
+    /// Quiet or idle-status color.
     pub idle: Rgb,
+    /// Command-field and pane-field fill.
     pub field: Rgb,
+    /// Command-field outline.
     pub field_line: Rgb,
+    /// Keyboard-keycap fill.
     pub key: Rgb,
+    /// Keyboard-keycap outline.
     pub key_line: Rgb,
+    /// Keyboard-keycap text.
     pub key_text: Rgb,
+    /// Spaces-bar fill.
     pub status_bar: Rgb,
+    /// Hairline along the spaces bar.
     pub status_line: Rgb,
+    /// Active Space chip fill.
     pub chip_active: Rgb,
+    /// Separator between status counts.
     pub separator: Rgb,
+    /// Pane outline.
     pub hairline: Rgb,
+    /// Pane title-row rule.
     pub title_line: Rgb,
+    /// Focused pane title-row fill.
     pub title_focus: Rgb,
+    /// Focused pane title-row outline.
     pub title_focus_line: Rgb,
+    /// Muted text on the focused title row.
     pub muted_focus: Rgb,
+    /// Handle hover fill behind the header dot and name.
     pub title_hover: Rgb,
+    /// Hover outline around a pane whose handle is hovered.
     pub hover_outline: Rgb,
+    /// Unseen or mail status text color.
     pub unseen_text: Rgb,
+    /// Light-cycle vehicle-head color.
     pub cycle_head: Rgb,
+    /// Dialog and overlay card fill, also used for pane previews.
     pub panel: Rgb,
+    /// Theme variant from which these tokens come.
     pub variant: ThemeVariant,
 }
 
@@ -55,6 +93,7 @@ const fn rgb(hex: u32) -> Rgb {
     [(hex >> 16) as u8, (hex >> 8) as u8, hex as u8]
 }
 
+/// Dark Graphite tokens from the design brief.
 pub const DARK: Tokens = Tokens {
     ground: rgb(0x101216),
     bar: rgb(0x15181d),
@@ -94,6 +133,7 @@ pub const DARK: Tokens = Tokens {
     variant: ThemeVariant::Dark,
 };
 
+/// Light Graphite tokens from the design brief.
 pub const LIGHT: Tokens = Tokens {
     ground: rgb(0xe9ecf0),
     bar: rgb(0xeef0f3),
@@ -133,6 +173,7 @@ pub const LIGHT: Tokens = Tokens {
     variant: ThemeVariant::Light,
 };
 
+/// Return the static token set for a theme variant.
 pub fn tokens(variant: ThemeVariant) -> &'static Tokens {
     match variant {
         ThemeVariant::Dark => &DARK,

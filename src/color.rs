@@ -5,13 +5,23 @@ use crate::tokens::{Rgb, ThemeVariant, Tokens};
 /// A background preset for the tabs and spaces bars.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum BarColor {
+    /// The default Graphite charcoal palette.
     #[default]
     Graphite,
+    /// The blue Harbor palette.
     Harbor,
+    /// The green Moss palette.
     Moss,
+    /// Plum on dark themes and its Sand counterpart on light themes.
     Plum,
 }
 
+/// Mix a foreground color over a background color using an 8-bit fixed-point weight.
+///
+/// `foreground_weight` must be in the inclusive range `0..=256`. A weight of
+/// `0` returns the background, and `256` returns the foreground. Callers must
+/// keep the weight bounded; values above `256` are outside this function's
+/// contract.
 pub fn mix_rgb(background: Rgb, foreground: Rgb, foreground_weight: u16) -> Rgb {
     let background_weight = 256u16.saturating_sub(foreground_weight);
     [
