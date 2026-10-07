@@ -20,7 +20,7 @@ pub use color::{
 };
 pub use derive::{bar_tokens, derive_tokens, theme_tokens, uses_brief, ThemeSource};
 pub use geom::Rect;
-pub use legend::{legend_keys, LegendChip, LegendPaint, LegendRun};
+pub use legend::{legend_keys, LegendChip, LegendPaint, LegendRun, LegendText};
 pub use pane::{activity_header_rects, pane_handle_rect, status_width, PaneStatus};
 pub use picker::{
     theme_picker_hit, theme_picker_layout, theme_picker_visible_rows, ThemePickerHit,

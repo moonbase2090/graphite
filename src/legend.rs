@@ -29,13 +29,26 @@ pub struct LegendChip {
     pub label: String,
 }
 
+/// A positioned plain-text legend item or caption.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LegendText {
+    /// Physical text layout rectangle.
+    pub rect: Rect,
+    /// Already-resolved text.
+    pub text: String,
+}
+
 /// Pure result of packing the visible legend runs.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct LegendPaint {
     /// Keycaps from the runs that fit atomically.
     pub chips: Vec<LegendChip>,
+    /// Plain-text runs that fit, in order.
+    pub texts: Vec<LegendText>,
     /// Captions from the runs that fit atomically.
     pub captions: Vec<String>,
+    /// Caption rectangles from the runs that fit atomically.
+    pub caption_rects: Vec<LegendText>,
 }
 
 struct LegendMetrics {
@@ -124,21 +137,39 @@ pub fn legend_keys<M: TextMetrics + ?Sized>(
         if start + run_width > limit {
             break;
         }
-        if let LegendRun::Keys { caps, caption } = run {
-            let mut chip_pen = start;
-            for (index, cap) in caps.iter().enumerate() {
-                if index > 0 {
-                    chip_pen += m.chip_gap;
-                }
-                let chip_w = legend_chip_width(metrics, cap, &m) as usize;
-                result.chips.push(LegendChip {
-                    rect: Rect::new(chip_pen.round() as usize, key_y, chip_w, m.key_h),
-                    label: cap.clone(),
+        match run {
+            LegendRun::Text(text) => {
+                result.texts.push(LegendText {
+                    rect: Rect::new(start.round() as usize, y, run_width.ceil() as usize, bar_h),
+                    text: text.clone(),
                 });
-                chip_pen += chip_w as f32;
             }
-            if !caption.is_empty() {
-                result.captions.push(caption.clone());
+            LegendRun::Keys { caps, caption } => {
+                let mut chip_pen = start;
+                for (index, cap) in caps.iter().enumerate() {
+                    if index > 0 {
+                        chip_pen += m.chip_gap;
+                    }
+                    let chip_w = legend_chip_width(metrics, cap, &m) as usize;
+                    result.chips.push(LegendChip {
+                        rect: Rect::new(chip_pen.round() as usize, key_y, chip_w, m.key_h),
+                        label: cap.clone(),
+                    });
+                    chip_pen += chip_w as f32;
+                }
+                if !caption.is_empty() {
+                    let caption_width = metrics.width(Face::Regular, m.label_px, caption);
+                    result.captions.push(caption.clone());
+                    result.caption_rects.push(LegendText {
+                        rect: Rect::new(
+                            (chip_pen + m.caption_gap).round() as usize,
+                            y,
+                            caption_width.ceil() as usize,
+                            bar_h,
+                        ),
+                        text: caption.clone(),
+                    });
+                }
             }
         }
         pen = start + run_width;
