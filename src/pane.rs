@@ -73,7 +73,34 @@ pub fn pane_handle_rect<M: TextMetrics + ?Sized>(
     status: PaneStatus,
     focus_row: bool,
 ) -> Option<Rect> {
-    todo!()
+    let s = |design: f32| design * scale_milli as f32 / 1000.0;
+    let p = |design: f32| crate::scale_px(design, scale_milli);
+    let head_h = p(PANE_HEADER_H).min(slot.h);
+    if slot.w < p(40.0) || head_h == 0 {
+        return None;
+    }
+    let x0 = slot.x as f32 + s(HEADER_PAD_X);
+    let px = s(HEADER_TEXT);
+    let status_w = status_width(metrics, scale_milli, status);
+    let text_end = slot
+        .right()
+        .saturating_sub(p(HEADER_PAD_X) + status_w.ceil() as usize + p(INNER_GAP))
+        as f32;
+    let text_x = x0 + s(HEADER_DOT) + s(INNER_GAP);
+    let face = if focus_row {
+        Face::SemiBold
+    } else {
+        Face::Regular
+    };
+    let shown = crate::ellipsize(metrics, face, px, name, (text_end - text_x).max(0.0));
+    let end = (text_x + metrics.width(face, px, &shown)).ceil() as usize;
+    let end = end.min(text_end.ceil() as usize).max(x0.ceil() as usize);
+    Some(Rect::new(
+        x0.ceil() as usize,
+        slot.y,
+        end.saturating_sub(x0.ceil() as usize),
+        head_h,
+    ))
 }
 
 /// Returns damage rectangles for the pane-header activity regions.
