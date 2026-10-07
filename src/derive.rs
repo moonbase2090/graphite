@@ -330,6 +330,42 @@ mod tests {
         )
     }
 
+    fn light_readability_probe() -> ThemeSource {
+        source(
+            "hive-muted-professional-light",
+            ThemeVariant::Light,
+            0xffffff,
+            0x999999,
+            0xffffff,
+            0x999999,
+            0xfafafa,
+            0xffffff,
+            0xcccccc,
+            0x96702f,
+            0x96702f,
+            0xff6b6b,
+            0x2f6f8c,
+        )
+    }
+
+    fn brief_dark() -> ThemeSource {
+        source(
+            "prismattyc-dark",
+            ThemeVariant::Dark,
+            0x15181d,
+            0xe6e9ee,
+            0x181b21,
+            0xe6e9ee,
+            0x252a33,
+            0x101216,
+            0x262a32,
+            0x4cc98a,
+            0xf2b84b,
+            0xff7a6b,
+            0x5aa2ff,
+        )
+    }
+
     fn expected_japanesque() -> crate::Tokens {
         crate::Tokens {
             ground: rgb(0x161616),
@@ -435,33 +471,42 @@ mod tests {
     }
 
     #[test]
-    fn chrome_overrides_make_brief_ids_derive() {
-        let mut theme = source(
-            "prismattyc-dark",
-            ThemeVariant::Dark,
-            0x203040,
-            0xf0e0d0,
-            0x181b21,
-            0xe6e9ee,
-            0x252a33,
-            0x101216,
-            0x262a32,
-            0x4cc98a,
-            0xf2b84b,
-            0xff7a6b,
-            0x5aa2ff,
-        );
+    fn non_brief_light_preset_runs_second_readability_pass() {
+        let theme = light_readability_probe();
+        let before = bar_tokens(&theme, None);
+        assert_eq!(before.tab_text, [106, 106, 106]);
+        let harbor = bar_tokens(&theme, Some(BarColor::Harbor));
+        assert_eq!(harbor.tab_text, [96, 96, 96]);
+        assert!(contrast_ratio(harbor.tab_text, harbor.status_bar) >= 4.6);
+    }
+
+    #[test]
+    fn brief_preset_keeps_brief_inks_unchanged() {
+        let theme = brief_dark();
+        let (bar, status_bar) = bar_fills(BarColor::Harbor, ThemeVariant::Dark);
+        let mut expected = DARK;
+        expected.bar = bar;
+        expected.status_bar = status_bar;
+        assert_eq!(bar_tokens(&theme, Some(BarColor::Harbor)), expected);
+    }
+
+    #[test]
+    fn chrome_bg_only_override_leaves_brief_path() {
+        let mut theme = brief_dark();
+        theme.chrome_bg = rgb(0x203040);
         assert!(!uses_brief(&theme));
         let derived = theme_tokens(&theme);
         assert_eq!(derived.bar, rgb(0x203040));
-        assert_eq!(derived.text, rgb(0xf0e0d0));
+        assert_eq!(derived.text, rgb(0xe6e9ee));
+    }
 
-        theme.id = "japanesque".to_owned();
-        theme.chrome_bg = rgb(0x203040);
+    #[test]
+    fn chrome_fg_only_override_leaves_brief_path() {
+        let mut theme = brief_dark();
         theme.chrome_fg = rgb(0xf0e0d0);
         assert!(!uses_brief(&theme));
         let derived = theme_tokens(&theme);
-        assert_eq!(derived.bar, rgb(0x203040));
+        assert_eq!(derived.bar, rgb(0x15181d));
         assert_eq!(derived.text, rgb(0xf0e0d0));
     }
 
