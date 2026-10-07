@@ -1,6 +1,7 @@
 //! Core types and algorithms shared by Graphite consumers.
 
 mod color;
+mod derive;
 mod geom;
 mod scale;
 mod text;
@@ -10,6 +11,7 @@ pub use color::{
     accent, bar_color_name, bar_fills, contrast_ratio, mix_rgb, relative_luminance, step_bar_color,
     BarColor,
 };
+pub use derive::{bar_tokens, derive_tokens, theme_tokens, uses_brief, ThemeSource};
 pub use geom::Rect;
 pub use scale::{
     scale_px, side_chip_px, side_cols_for_px, side_footer_px, side_gap_px, side_header_px,
