@@ -88,8 +88,13 @@ pub struct TabSlot {
 pub enum BarHit {
     /// The space selector dropdown.
     SpaceMenu,
-    /// A tab chip, optionally on its close target.
-    Tab { index: usize, close: bool },
+    /// A tab chip by its zero-based index.
+    Tab {
+        /// Zero-based index into the input tabs and the layout's `tabs` vector.
+        index: usize,
+        /// Whether the hit point is inside that tab's close target.
+        close: bool,
+    },
     /// The new-tab button.
     NewTab,
     /// The command field.
@@ -343,8 +348,25 @@ pub fn bar_hit(layout: &BarLayout, px: usize, py: usize, reserve_end: bool) -> O
 
 /// Resolves a drop target to the rectangle the host should highlight.
 pub fn drop_target_rect(layout: &BarLayout, target: DropTarget) -> Option<Rect> {
-    let _ = (layout, target);
-    todo!()
+    match target {
+        DropTarget::Tab(index) => layout.tabs.get(index).map(|slot| slot.chip),
+        DropTarget::NewTab => {
+            let chip_h = layout.plus.h;
+            let target = Rect::new(
+                layout.plus.x,
+                layout.bar.y + layout.bar.h.saturating_sub(chip_h) / 2,
+                layout
+                    .bar
+                    .right()
+                    .saturating_sub(layout.plus.x)
+                    .saturating_sub(physical(BAR_PAD_X, layout.scale_milli)),
+                chip_h,
+            );
+            (target.w >= physical(24.0, layout.scale_milli)
+                && target.h >= physical(12.0, layout.scale_milli))
+            .then_some(target)
+        }
+    }
 }
 
 #[cfg(test)]

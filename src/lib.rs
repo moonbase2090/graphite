@@ -20,7 +20,8 @@ pub use scale::{
     SIDE_THUMB_W, TABS_BAR_H, WINDOW_PAD,
 };
 pub use tabs_bar::{
-    bar_hit, bar_layout, shift_bar, BarHit, BarLayout, Dot, DropTarget, TabSlot, TabText,
+    bar_hit, bar_layout, drop_target_rect, shift_bar, BarHit, BarLayout, Dot, DropTarget, TabSlot,
+    TabText,
 };
 pub use text::{ellipsize, Face, TextMetrics};
 pub use tokens::{tokens, Rgb, ThemeVariant, Tokens, DARK, LIGHT};
