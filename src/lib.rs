@@ -13,6 +13,7 @@ mod sidebar;
 mod tabs_bar;
 mod text;
 mod tokens;
+mod translucency;
 
 pub use color::{
     accent, bar_color_name, bar_fills, contrast_ratio, mix_rgb, relative_luminance, step_bar_color,
@@ -49,6 +50,7 @@ pub use tabs_bar::{
 };
 pub use text::{ellipsize, Face, TextMetrics};
 pub use tokens::{tokens, Rgb, ThemeVariant, Tokens, DARK, LIGHT};
+pub use translucency::{alpha_policy, translucency_roles, AlphaPolicy, TranslucencyRole};
 
 #[cfg(test)]
 mod tests {
