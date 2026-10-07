@@ -4,6 +4,7 @@ mod color;
 mod derive;
 mod geom;
 mod scale;
+mod side_rail;
 mod tabs_bar;
 mod text;
 mod tokens;
@@ -20,6 +21,10 @@ pub use scale::{
     PANE_PAD, PANE_RADIUS, RAIL_H, SIDEBAR_W, SIDE_CHIP_H, SIDE_CHIP_H_COMPACT, SIDE_FOOTER_H,
     SIDE_GAP, SIDE_HEADER_H, SIDE_PAD, SIDE_RAIL_DEFAULT_COLS, SIDE_RAIL_W, SIDE_THUMB_MIN_H,
     SIDE_THUMB_W, TABS_BAR_H, WINDOW_PAD,
+};
+pub use side_rail::{
+    rail_chip_width, rail_close_width, rail_plus_width, RAIL_CHIP_H, RAIL_CHIP_PAD_X, RAIL_CLOSE_W,
+    RAIL_DOT, RAIL_TEXT,
 };
 pub use tabs_bar::{
     bar_hit, bar_layout, drop_target_rect, shift_bar, BarHit, BarLayout, Dot, DropTarget, TabSlot,
