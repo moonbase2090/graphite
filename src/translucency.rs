@@ -36,13 +36,34 @@ pub enum AlphaPolicy {
 
 /// Returns every role exactly once in the plan's policy-table order.
 pub fn translucency_roles() -> &'static [TranslucencyRole; 10] {
-    todo!()
+    &[
+        TranslucencyRole::Text,
+        TranslucencyRole::Cursor,
+        TranslucencyRole::StatusDots,
+        TranslucencyRole::NeedsYouBadge,
+        TranslucencyRole::ActiveTabChip,
+        TranslucencyRole::CommandField,
+        TranslucencyRole::FocusRing,
+        TranslucencyRole::WindowGround,
+        TranslucencyRole::PaneSurfaces,
+        TranslucencyRole::BarBackgrounds,
+    ]
 }
 
 /// Returns the data-only alpha policy for a role.
 pub fn alpha_policy(role: TranslucencyRole) -> AlphaPolicy {
-    let _ = role;
-    todo!()
+    match role {
+        TranslucencyRole::Text
+        | TranslucencyRole::Cursor
+        | TranslucencyRole::StatusDots
+        | TranslucencyRole::NeedsYouBadge
+        | TranslucencyRole::ActiveTabChip
+        | TranslucencyRole::CommandField
+        | TranslucencyRole::FocusRing => AlphaPolicy::Opaque,
+        TranslucencyRole::WindowGround
+        | TranslucencyRole::PaneSurfaces
+        | TranslucencyRole::BarBackgrounds => AlphaPolicy::FollowChromeAlpha,
+    }
 }
 
 #[cfg(test)]
