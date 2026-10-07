@@ -141,10 +141,10 @@ mod tests {
         assert_eq!(side_header_px(2000), 88);
         assert_eq!(side_footer_px(1000), 56);
         assert_eq!(side_footer_px(2000), 112);
-        assert_eq!(side_chip_px(1000, false), 44);
-        assert_eq!(side_chip_px(2000, false), 88);
-        assert_eq!(side_chip_px(1000, true), 28);
-        assert_eq!(side_chip_px(2000, true), 56);
+        assert_eq!(side_chip_px(1000, true), 44);
+        assert_eq!(side_chip_px(2000, true), 88);
+        assert_eq!(side_chip_px(1000, false), 28);
+        assert_eq!(side_chip_px(2000, false), 56);
         assert_eq!(side_gap_px(1000), 4);
         assert_eq!(side_gap_px(2000), 8);
         assert_eq!(side_pad_px(1000), 8);
