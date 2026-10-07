@@ -61,13 +61,13 @@ pub fn side_footer_px(scale_milli: u32) -> usize {
     scale_px(SIDE_FOOTER_H, scale_milli)
 }
 
-/// Returns a scaled side-column chip height.
-pub fn side_chip_px(scale_milli: u32, compact: bool) -> usize {
+/// Returns the scaled side-column chip height. `pane_names` selects the full chip.
+pub fn side_chip_px(scale_milli: u32, pane_names: bool) -> usize {
     scale_px(
-        if compact {
-            SIDE_CHIP_H_COMPACT
-        } else {
+        if pane_names {
             SIDE_CHIP_H
+        } else {
+            SIDE_CHIP_H_COMPACT
         },
         scale_milli,
     )

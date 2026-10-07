@@ -21,18 +21,26 @@ pub fn rail_chip_width<M: TextMetrics + ?Sized>(
     label: &str,
     current: bool,
 ) -> usize {
-    todo!()
+    let s = |design: f32| design * scale_milli as f32 / 1000.0;
+    let dot = if current { s(RAIL_DOT) + s(7.0) } else { 0.0 };
+    (s(RAIL_CHIP_PAD_X)
+        + dot
+        + metrics.width(Face::Regular, s(RAIL_TEXT), label)
+        + s(6.0)
+        + s(RAIL_CLOSE_W))
+    .ceil() as usize
 }
 
 /// Returns the physical width of a rail chip's close target.
 pub fn rail_close_width(scale_milli: u32) -> usize {
-    todo!()
+    crate::scale_px(RAIL_CLOSE_W, scale_milli)
 }
 
 /// Returns the width of the fixed `+ New space` rail button.
 pub fn rail_plus_width<M: TextMetrics + ?Sized>(metrics: &M, scale_milli: u32) -> usize {
-    let _ = (metrics, scale_milli);
-    todo!()
+    let s = |design: f32| design * scale_milli as f32 / 1000.0;
+    (2.0 * s(RAIL_CHIP_PAD_X) + metrics.width(Face::Regular, s(RAIL_TEXT), RAIL_PLUS_LABEL)).ceil()
+        as usize
 }
 
 #[cfg(test)]
