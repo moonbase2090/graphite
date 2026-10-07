@@ -341,6 +341,12 @@ pub fn bar_hit(layout: &BarLayout, px: usize, py: usize, reserve_end: bool) -> O
     (reserve_end && after_tabs).then_some(BarHit::EmptyEnd)
 }
 
+/// Resolves a drop target to the rectangle the host should highlight.
+pub fn drop_target_rect(layout: &BarLayout, target: DropTarget) -> Option<Rect> {
+    let _ = (layout, target);
+    todo!()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -496,9 +502,17 @@ mod tests {
     }
 
     #[test]
-    fn drop_target_carries_tab_or_new_tab_semantics_without_painting() {
-        let targets = [DropTarget::Tab(1), DropTarget::NewTab];
-        assert!(matches!(targets[0], DropTarget::Tab(1)));
-        assert!(matches!(targets[1], DropTarget::NewTab));
+    fn drop_target_resolves_tab_and_new_tab_geometry() {
+        let tabs = [tab("grid", true), tab("review", false)];
+        let layout = bar_layout(&OneCell, 1000, 1440, 0, "lab", &tabs, "");
+        assert_eq!(
+            drop_target_rect(&layout, DropTarget::Tab(1)),
+            Some(Rect::new(233, 7, 133, 30))
+        );
+        assert_eq!(
+            drop_target_rect(&layout, DropTarget::NewTab),
+            Some(Rect::new(370, 7, 1060, 30))
+        );
+        assert_eq!(drop_target_rect(&layout, DropTarget::Tab(2)), None);
     }
 }
