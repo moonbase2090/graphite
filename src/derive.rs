@@ -34,24 +34,238 @@ pub struct ThemeSource {
     pub ansi: [Rgb; 16],
 }
 
+const BRIEF_THEMES: [&str; 3] = ["prismattyc", "prismattyc-dark", "prismattyc-light"];
+const BLACK: Rgb = [0, 0, 0];
+const WHITE: Rgb = [0xff, 0xff, 0xff];
+const AA: f32 = 4.5;
+
 /// Return whether a source is one of the unchanged built-in Graphite themes.
-pub fn uses_brief(_source: &ThemeSource) -> bool {
-    false
+pub fn uses_brief(source: &ThemeSource) -> bool {
+    let brief = crate::tokens::tokens(source.variant);
+    BRIEF_THEMES.contains(&source.id.as_str())
+        && source.chrome_bg == brief.bar
+        && source.chrome_fg == brief.text
 }
 
 /// Derive Graphite tokens from a theme source.
 pub fn derive_tokens(source: &ThemeSource) -> Tokens {
-    crate::tokens::tokens(source.variant).to_owned()
+    let variant = source.variant;
+    let light = variant == ThemeVariant::Light;
+    let (bar, fg) = (source.chrome_bg, source.chrome_fg);
+    let (pane, ink) = (source.default_bg, source.default_fg);
+    let blue = source.ansi[4];
+    let status_bar = if light {
+        toward(bar, fg, 5)
+    } else {
+        toward(bar, BLACK, 38)
+    };
+    let mut tokens = Tokens {
+        ground: source.pane_backdrop,
+        bar,
+        bar_line: toward(bar, fg, if light { 12 } else { 7 }),
+        divider: toward(bar, fg, 12),
+        tab_active: source.tab_active_bg,
+        tab_active_line: light.then(|| toward(bar, fg, 30)),
+        tab_hover: hover_rgb(variant, bar, fg, 0.10),
+        text: fg,
+        text_strong: if light { fg } else { toward(fg, WHITE, 30) },
+        muted: toward(fg, bar, 30),
+        tab_text: toward(fg, bar, 25),
+        working: source.active_badge,
+        unseen: source.unseen_badge,
+        attention: source.attention_badge,
+        on_attention: ink_on(source.attention_badge),
+        idle: toward(fg, bar, 50),
+        field: pane,
+        field_line: toward(bar, fg, 16),
+        key: hover_rgb(variant, bar, fg, 0.10),
+        key_line: toward(bar, fg, 18),
+        key_text: toward(fg, bar, 12),
+        status_bar,
+        status_line: toward(status_bar, fg, 7),
+        chip_active: derived_tab_active_bg(variant, status_bar, fg),
+        separator: toward(bar, fg, 25),
+        hairline: source.pane_border,
+        title_line: toward(pane, ink, 8),
+        title_focus: toward(pane, blue, 10),
+        title_focus_line: toward(pane, blue, 22),
+        muted_focus: toward(ink, pane, 22),
+        title_hover: hover_rgb(variant, pane, ink, 0.10),
+        hover_outline: toward(pane, blue, 40),
+        unseen_text: source.unseen_badge,
+        cycle_head: crate::tokens::tokens(variant).cycle_head,
+        panel: pane,
+        variant,
+    };
+    keep_text_readable(&mut tokens);
+    tokens
 }
 
 /// Return brief tokens verbatim, or derive tokens for another theme.
 pub fn theme_tokens(source: &ThemeSource) -> Tokens {
-    derive_tokens(source)
+    if uses_brief(source) {
+        *crate::tokens::tokens(source.variant)
+    } else {
+        derive_tokens(source)
+    }
 }
 
 /// Apply an optional bar preset to theme-derived tokens.
-pub fn bar_tokens(source: &ThemeSource, _bar: Option<BarColor>) -> Tokens {
-    derive_tokens(source)
+pub fn bar_tokens(source: &ThemeSource, bar: Option<BarColor>) -> Tokens {
+    let mut tokens = theme_tokens(source);
+    if let Some(bar) = bar {
+        let (tabs, status) = crate::color::bar_fills(bar, source.variant);
+        tokens.bar = tabs;
+        tokens.status_bar = status;
+        if !uses_brief(source) {
+            keep_text_readable(&mut tokens);
+        }
+    }
+    tokens
+}
+
+/// Move a color a percentage of the way toward another color.
+fn toward(from: Rgb, to: Rgb, percent: u16) -> Rgb {
+    crate::mix_rgb(from, to, percent.min(100) * 256 / 100)
+}
+
+fn readable(ink: Rgb, grounds: &[Rgb], target: f32) -> Rgb {
+    let Some(&first) = grounds.first() else {
+        return ink;
+    };
+    let pole = if crate::contrast_ratio(WHITE, first) >= crate::contrast_ratio(BLACK, first) {
+        WHITE
+    } else {
+        BLACK
+    };
+    let worst = |color: Rgb| {
+        grounds
+            .iter()
+            .map(|ground| crate::contrast_ratio(color, *ground))
+            .fold(f32::INFINITY, f32::min)
+    };
+    let mut color = ink;
+    for _ in 0..24 {
+        if worst(color) >= target {
+            break;
+        }
+        color = crate::mix_rgb(color, pole, 24);
+    }
+    color
+}
+
+fn ink_on(fill: Rgb) -> Rgb {
+    if crate::contrast_ratio(WHITE, fill)
+        >= crate::contrast_ratio(crate::tokens::DARK.on_attention, fill)
+    {
+        WHITE
+    } else {
+        crate::tokens::DARK.on_attention
+    }
+}
+
+fn keep_text_readable(tokens: &mut Tokens) {
+    let bars = [
+        tokens.bar,
+        tokens.status_bar,
+        tokens.tab_active,
+        tokens.chip_active,
+    ];
+    tokens.muted = readable(
+        tokens.muted,
+        &[tokens.bar, tokens.tab_active, tokens.field],
+        AA,
+    );
+    tokens.tab_text = readable(tokens.tab_text, &bars, AA);
+    let floor = AA
+        .max(crate::contrast_ratio(tokens.muted, tokens.bar))
+        .max(crate::contrast_ratio(tokens.tab_text, tokens.bar));
+    tokens.text = readable(tokens.text, &bars, floor);
+    tokens.text_strong = readable(tokens.text_strong, &bars, floor);
+    tokens.key_text = readable(tokens.key_text, &[tokens.key], AA);
+    tokens.muted_focus = readable(tokens.muted_focus, &[tokens.title_focus], AA);
+    tokens.unseen_text = readable(tokens.unseen_text, &[tokens.bar, tokens.status_bar], AA);
+    tokens.on_attention = readable(tokens.on_attention, &[tokens.attention], AA);
+}
+
+fn derived_tab_active_bg(variant: ThemeVariant, chrome_bg: Rgb, chrome_fg: Rgb) -> Rgb {
+    const TAB_ACTIVE_DARK_BLEND: f32 = 0.08;
+    const TAB_ACTIVE_LIGHT_BLEND: f32 = 0.06;
+    const MIN_TAB_ACTIVE_DELTA: u8 = 8;
+    const MAX_TAB_ACTIVE_DELTA: u8 = 40;
+    let t = match variant {
+        ThemeVariant::Dark => TAB_ACTIVE_DARK_BLEND,
+        ThemeVariant::Light => TAB_ACTIVE_LIGHT_BLEND,
+    };
+    let mix = |from: u8, toward: u8| {
+        (f32::from(from) + (f32::from(toward) - f32::from(from)) * t).round() as u8
+    };
+    let mut out = [
+        mix(chrome_bg[0], chrome_fg[0]),
+        mix(chrome_bg[1], chrome_fg[1]),
+        mix(chrome_bg[2], chrome_fg[2]),
+    ];
+    let max_delta = (0..3)
+        .map(|i| out[i].abs_diff(chrome_bg[i]))
+        .max()
+        .unwrap_or(0);
+    if max_delta == 0 {
+        return shade(chrome_bg, 8);
+    }
+    let scale = if max_delta < MIN_TAB_ACTIVE_DELTA {
+        f32::from(MIN_TAB_ACTIVE_DELTA) / f32::from(max_delta)
+    } else if max_delta > MAX_TAB_ACTIVE_DELTA {
+        f32::from(MAX_TAB_ACTIVE_DELTA) / f32::from(max_delta)
+    } else {
+        return out;
+    };
+    for i in 0..3 {
+        let signed = i32::from(out[i]) - i32::from(chrome_bg[i]);
+        let scaled = (signed as f32 * scale).round() as i32;
+        out[i] = (i32::from(chrome_bg[i]) + scaled).clamp(0, 255) as u8;
+    }
+    out
+}
+
+fn shade(rgb: Rgb, percent: u32) -> Rgb {
+    const MIN_BACKDROP_DELTA: u8 = 8;
+    let step = |channel: u8| {
+        let scaled = (u32::from(channel) * percent) / 100;
+        let delta = scaled.max(u32::from(MIN_BACKDROP_DELTA)) as u8;
+        match channel.checked_sub(delta) {
+            Some(darker) => darker,
+            None => channel.saturating_add(delta),
+        }
+    };
+    [step(rgb[0]), step(rgb[1]), step(rgb[2])]
+}
+
+fn hover_rgb(variant: ThemeVariant, base: Rgb, chrome_fg: Rgb, blend: f32) -> Rgb {
+    const HOVER_LIGHT_SCALE: f32 = 0.8;
+    const MAX_HOVER_DELTA: u8 = 30;
+    let t = blend.clamp(0.0, 0.3)
+        * if variant == ThemeVariant::Light {
+            HOVER_LIGHT_SCALE
+        } else {
+            1.0
+        };
+    let mix = |from: u8, toward: u8| {
+        (f32::from(from) + (f32::from(toward) - f32::from(from)) * t).round() as u8
+    };
+    let mut out = [
+        mix(base[0], chrome_fg[0]),
+        mix(base[1], chrome_fg[1]),
+        mix(base[2], chrome_fg[2]),
+    ];
+    let max_delta = (0..3).map(|i| out[i].abs_diff(base[i])).max().unwrap_or(0);
+    if max_delta > MAX_HOVER_DELTA {
+        let scale = f32::from(MAX_HOVER_DELTA) / f32::from(max_delta);
+        for i in 0..3 {
+            out[i] = (f32::from(base[i]) + (f32::from(out[i]) - f32::from(base[i])) * scale).round()
+                as u8;
+        }
+    }
+    out
 }
 
 #[cfg(test)]
@@ -63,6 +277,7 @@ mod tests {
         [(hex >> 16) as u8, (hex >> 8) as u8, hex as u8]
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn source(
         id: &str,
         variant: ThemeVariant,
