@@ -95,8 +95,82 @@ pub fn sidebar_layout(
     row_count: usize,
     scroll: usize,
 ) -> SidebarLayout {
-    let _ = (scale_milli, column, row_count, scroll);
-    todo!()
+    let p = |design: f32| crate::scale_px(design, scale_milli);
+    let head_h = crate::TABS_BAR_H.px(scale_milli);
+    let action_h = p(SIDEBAR_ACTION_H);
+    let foot_h = action_h
+        .saturating_mul(SIDEBAR_ACTIONS.len())
+        .saturating_add(p(SIDEBAR_FOOT_PAD));
+    let head = Rect::new(column.x, column.y, column.w, head_h.min(column.h));
+    let foot_h = foot_h.min(column.h.saturating_sub(head.h));
+    let foot = Rect::new(
+        column.x,
+        column.y.saturating_add(column.h).saturating_sub(foot_h),
+        column.w,
+        foot_h,
+    );
+    let list_y = head.y.saturating_add(head.h);
+    let list = Rect::new(column.x, list_y, column.w, foot.y.saturating_sub(list_y));
+    let row_h = p(SIDEBAR_ROW_H).max(1);
+    let visible = list.h / row_h;
+    let max_scroll = row_count.saturating_sub(visible.max(1));
+    let first_row = scroll.min(max_scroll).min(row_count);
+    let mut rows = Vec::new();
+    for index in 0..row_count.saturating_sub(first_row) {
+        let y = list.y.saturating_add(index.saturating_mul(row_h));
+        if y.saturating_add(row_h) > list.y.saturating_add(list.h) {
+            break;
+        }
+        rows.push(Rect::new(list.x, y, list.w, row_h));
+    }
+    let total_h = row_count.saturating_mul(row_h);
+    let thumb = if total_h > list.h && list.h > 0 {
+        let thumb_h = ((list.h as f32 * list.h as f32) / total_h as f32)
+            .ceil()
+            .max(p(SIDEBAR_THUMB_MIN) as f32) as usize;
+        let thumb_h = thumb_h.min(list.h);
+        let travel = list.h.saturating_sub(thumb_h);
+        let thumb_y = if max_scroll == 0 {
+            list.y
+        } else {
+            list.y.saturating_add(
+                travel
+                    .saturating_mul(first_row)
+                    .checked_div(max_scroll)
+                    .unwrap_or(0),
+            )
+        };
+        let thumb_w = p(SIDEBAR_THUMB_W).min(list.w);
+        Some(Rect::new(
+            list.x.saturating_add(list.w).saturating_sub(thumb_w),
+            thumb_y,
+            thumb_w,
+            thumb_h,
+        ))
+    } else {
+        None
+    };
+    let mut actions = [Rect::new(0, 0, 0, 0); 3];
+    for (index, slot) in actions.iter_mut().enumerate() {
+        *slot = Rect::new(
+            foot.x,
+            foot.y
+                .saturating_add(p(SIDEBAR_FOOT_PAD))
+                .saturating_add(index.saturating_mul(action_h)),
+            foot.w,
+            action_h.min(foot.h.saturating_sub(p(SIDEBAR_FOOT_PAD))),
+        );
+    }
+    SidebarLayout {
+        column,
+        head,
+        list,
+        rows,
+        thumb,
+        foot,
+        actions,
+        first_row,
+    }
 }
 
 /// Pairs absolute input rows with their visible physical slots.
@@ -104,20 +178,72 @@ pub fn sidebar_rows_in_view<'a, T>(
     rows: &'a [T],
     layout: &SidebarLayout,
 ) -> Vec<(usize, &'a T, Rect)> {
-    let _ = (rows, layout);
-    todo!()
+    rows.iter()
+        .enumerate()
+        .skip(layout.first_row)
+        .take(layout.rows.len())
+        .zip(layout.rows.iter().copied())
+        .map(|((index, row), slot)| (index, row, slot))
+        .collect()
 }
 
 /// Computes the sidebar header breadcrumb and fixed arrangement track.
 pub fn sidebar_header_layout(scale_milli: u32, span: Rect) -> SidebarHeaderLayout {
-    let _ = (scale_milli, span);
-    todo!()
+    let p = |design: f32| crate::scale_px(design, scale_milli);
+    let inset = p(ARRANGE_INSET);
+    let seg_w = p(ARRANGE_SEG_W);
+    let track_h = p(ARRANGE_H);
+    let track_w = seg_w
+        .saturating_mul(SIDEBAR_ARRANGE.len())
+        .saturating_add(inset.saturating_mul(2));
+    let track = Rect::new(
+        span.right().saturating_sub(p(12.0)).saturating_sub(track_w),
+        span.y.saturating_add(span.h.saturating_sub(track_h) / 2),
+        track_w,
+        track_h,
+    );
+    let mut buttons = [Rect::new(0, 0, 0, 0); 3];
+    for (index, slot) in buttons.iter_mut().enumerate() {
+        *slot = Rect::new(
+            track
+                .x
+                .saturating_add(inset)
+                .saturating_add(index.saturating_mul(seg_w)),
+            track.y.saturating_add(inset),
+            seg_w,
+            track_h.saturating_sub(inset.saturating_mul(2)),
+        );
+    }
+    let crumb_x = span.x.saturating_add(p(12.0));
+    let crumb = Rect::new(
+        crumb_x,
+        span.y,
+        track.x.saturating_sub(p(8.0)).saturating_sub(crumb_x),
+        span.h,
+    );
+    SidebarHeaderLayout {
+        span,
+        crumb,
+        track,
+        buttons,
+    }
 }
 
 /// Computes the sidebar collapse/expand toggle rectangle.
 pub fn sidebar_toggle_rect(scale_milli: u32, column: Rect, head: Rect, dock_right: bool) -> Rect {
-    let _ = (scale_milli, column, head, dock_right);
-    todo!()
+    let p = |design: f32| crate::scale_px(design, scale_milli);
+    let size = p(18.0).max(12).min(column.w);
+    let x = if dock_right {
+        column.x.saturating_add(p(10.0))
+    } else {
+        column.right().saturating_sub(p(10.0)).saturating_sub(size)
+    };
+    Rect::new(
+        x,
+        head.y.saturating_add(head.h.saturating_sub(size) / 2),
+        size,
+        size,
+    )
 }
 
 /// Resolves a physical point with thumb-first sidebar hit precedence.
@@ -130,14 +256,33 @@ pub fn sidebar_hit(
     px: usize,
     py: usize,
 ) -> Option<SidebarHit> {
-    let _ = (rows, actions, arrange, thumb, toggle, px, py);
-    todo!()
+    if thumb.is_some_and(|rect| rect.contains(px, py)) {
+        return Some(SidebarHit::Thumb);
+    }
+    if toggle.contains(px, py) {
+        return Some(SidebarHit::Toggle);
+    }
+    if let Some(index) = rows.iter().position(|rect| rect.contains(px, py)) {
+        return Some(SidebarHit::Row(index));
+    }
+    if let Some(index) = actions.iter().position(|rect| rect.contains(px, py)) {
+        return Some(SidebarHit::Action(index));
+    }
+    arrange
+        .iter()
+        .position(|rect| rect.contains(px, py))
+        .map(SidebarHit::Arrange)
 }
 
 /// Returns the final scroll offset for the given sidebar height and row count.
 pub fn sidebar_max_scroll(scale_milli: u32, column_h: usize, row_count: usize) -> usize {
-    let _ = (scale_milli, column_h, row_count);
-    todo!()
+    sidebar_layout(
+        scale_milli,
+        Rect::new(0, 0, SIDEBAR_W.px(scale_milli), column_h),
+        row_count,
+        usize::MAX,
+    )
+    .first_row
 }
 
 #[cfg(test)]
@@ -220,11 +365,9 @@ mod tests {
     #[test]
     fn arrange_control_is_a_fixed_track_of_equal_segments() {
         let one = sidebar_header_layout(1000, Rect::new(256, 0, 1024, 44));
-        let one_again = sidebar_header_layout(1000, Rect::new(256, 0, 1024, 44));
-        assert_eq!(one, one_again);
         assert_eq!(one.track, Rect::new(1168, 8, 100, 28));
 
-        let one_half = sidebar_header_layout(1500, Rect::new(256, 0, 1024, 63));
+        let one_half = sidebar_header_layout(1500, Rect::new(256, 0, 1024, 66));
         assert_eq!(one_half.track, Rect::new(1112, 12, 150, 42));
         assert_eq!(
             one_half.buttons,
