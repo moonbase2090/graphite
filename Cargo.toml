@@ -6,3 +6,6 @@ rust-version = "1.85"
 license = "MPL-2.0"
 publish = false
 repository = "https://github.com/moonbase2090/graphite"
+
+[dependencies]
+unicode-segmentation = "1.13.3"
