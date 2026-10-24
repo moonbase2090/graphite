@@ -27,8 +27,13 @@ if [ -n "$RUST_MANIFESTS" ] && staged_match '*.rs'; then
         echo "pre-commit: cargo not found; install Rust with rustfmt to commit .rs files" >&2
         exit 1
     fi
+    # Check the staged content, not the working copy. Export the index to a
+    # temp directory so a partial stage cannot pass on a formatted worktree.
+    index_dir=$(mktemp -d "${TMPDIR:-/tmp}/pre-commit-index.XXXXXX") || exit 1
+    trap 'rm -rf "$index_dir"' EXIT
+    git checkout-index -a --prefix="$index_dir/" || exit 1
     for manifest in $RUST_MANIFESTS; do
-        if ! cargo fmt --manifest-path "$manifest" --all -- --check; then
+        if ! (cd "$index_dir" && cargo fmt --manifest-path "$manifest" --all -- --check); then
             echo "pre-commit: Rust files are not formatted. Fix with:" >&2
             if [ "$manifest" = "Cargo.toml" ]; then
                 echo "  cargo fmt --all" >&2
