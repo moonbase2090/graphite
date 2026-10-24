@@ -4,6 +4,8 @@ mod color;
 mod derive;
 mod geom;
 mod legend;
+#[cfg(feature = "motion")]
+mod motion;
 mod pane;
 mod picker;
 mod ring;
@@ -22,6 +24,8 @@ pub use color::{
 pub use derive::{bar_tokens, derive_tokens, theme_tokens, uses_brief, ThemeSource};
 pub use geom::Rect;
 pub use legend::{legend_keys, LegendChip, LegendPaint, LegendRun, LegendText};
+#[cfg(feature = "motion")]
+pub use motion::{light_cycle_traced_samples, MotionCurve};
 pub use pane::{activity_header_rects, pane_handle_rect, status_width, PaneStatus};
 pub use picker::{
     theme_picker_hit, theme_picker_layout, theme_picker_visible_rows, ThemePickerHit,

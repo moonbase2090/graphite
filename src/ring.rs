@@ -37,6 +37,12 @@ impl RingSweep {
     pub fn is_empty(&self) -> bool {
         self.samples.is_empty()
     }
+
+    /// Perimeter samples traced at light-cycle `progress` in `[0, 1]` (requires `motion`).
+    #[cfg(feature = "motion")]
+    pub fn traced_at(&self, progress: f32, curve: crate::MotionCurve) -> usize {
+        crate::light_cycle_traced_samples(progress, self.len(), curve)
+    }
 }
 
 fn push_straight(samples: &mut Vec<(f32, f32)>, ax: f32, ay: f32, bx: f32, by: f32) {
@@ -96,5 +102,17 @@ mod tests {
         let last = samples.last().unwrap();
         let home = ((last.0 - 8.0).powi(2) + last.1.powi(2)).sqrt();
         assert!(home < 2.0, "loop closes {last:?}");
+    }
+
+    #[cfg(feature = "motion")]
+    #[test]
+    fn traced_at_matches_linear_progress_on_a_real_sweep() {
+        use crate::MotionCurve;
+        let sweep = RingSweep::for_slot(Rect::new(0, 0, 100, 60), 8.0);
+        let len = sweep.len();
+        assert_eq!(sweep.traced_at(0.0, MotionCurve::Linear), 0);
+        assert_eq!(sweep.traced_at(1.0, MotionCurve::Linear), len);
+        let half = sweep.traced_at(0.5, MotionCurve::Linear);
+        assert!((half as i32 - (len / 2) as i32).abs() <= 1);
     }
 }
