@@ -48,8 +48,14 @@ mod tests {
     #[test]
     fn linear_maps_endpoints_and_midpoint() {
         assert_eq!(light_cycle_traced_samples(0.0, 100, MotionCurve::Linear), 0);
-        assert_eq!(light_cycle_traced_samples(1.0, 100, MotionCurve::Linear), 100);
-        assert_eq!(light_cycle_traced_samples(0.5, 100, MotionCurve::Linear), 50);
+        assert_eq!(
+            light_cycle_traced_samples(1.0, 100, MotionCurve::Linear),
+            100
+        );
+        assert_eq!(
+            light_cycle_traced_samples(0.5, 100, MotionCurve::Linear),
+            50
+        );
     }
 
     #[test]
@@ -59,7 +65,10 @@ mod tests {
             let traced = light_cycle_traced_samples(t, 80, MotionCurve::InOutCubic);
             assert!(traced <= 80);
         }
-        assert_eq!(light_cycle_traced_samples(1.0, 80, MotionCurve::InOutCubic), 80);
+        assert_eq!(
+            light_cycle_traced_samples(1.0, 80, MotionCurve::InOutCubic),
+            80
+        );
     }
 
     #[test]
