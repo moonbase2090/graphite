@@ -12,3 +12,10 @@ description = "Ratatui chrome widgets drawn from Graphite tokens."
 graphite-core = { path = ".." }
 ratatui = { version = "0.29", default-features = false }
 unicode-width = "0.2"
+
+[dev-dependencies]
+criterion = { version = "=0.5.1", default-features = false }
+
+[[bench]]
+name = "chrome"
+harness = false

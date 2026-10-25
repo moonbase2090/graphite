@@ -128,3 +128,15 @@ approved release, run `python3 scripts/check-release.py --tag vX.Y.Z` against th
 prepared release commit. It must reject tags whose version differs from the
 workspace or whose changelog section is absent. These commands perform no
 release writes. The tag workflow repeats the check and workspace tests/docs.
+
+## Widget performance guardrails
+
+Run `cargo bench --locked -p graphite-tui --bench chrome -- --test` before
+`python3 scripts/bench-widgets.py`. The first command must verify all six
+snapshot fixtures, exact control symbols/styles, and both frame paths.
+The second command must complete five alternating rounds and print a PASS,
+FAIL, or INCONCLUSIVE for each widget and the combined frame. PASS requires
+the entire observed Graphite range to stay within 10 percent of the entire
+control range. Only exit 0 satisfies the gate. Retain `target/widget-proof` and
+record compiler/load plus a separate profile before reporting a performance
+claim. See `docs/widget-benchmarks.md` for the control's scope and exclusions.
