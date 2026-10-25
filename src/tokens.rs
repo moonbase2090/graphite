@@ -86,6 +86,7 @@ pub struct Tokens {
     /// Dialog and overlay card fill, also used for pane previews.
     pub panel: Rgb,
     /// Categorical series colors for charts, in fixed order series-1..6.
+    #[cfg(feature = "series")]
     pub series: [Rgb; 6],
     /// Theme variant from which these tokens come.
     pub variant: ThemeVariant,
@@ -95,6 +96,7 @@ const fn rgb(hex: u32) -> Rgb {
     [(hex >> 16) as u8, (hex >> 8) as u8, hex as u8]
 }
 
+#[cfg(feature = "series")]
 /// Dark series palette in order series-1..6: blue `#5AA9FF`, green `#4CC98A`, amber
 /// `#F2B84B`, violet `#C08BFF`, coral `#FF7A6B`, teal `#3FD0D0`. Each has at least 3:1
 /// contrast against the ground, bar, panel, and field surfaces.
@@ -107,6 +109,7 @@ pub const SERIES_DARK: [Rgb; 6] = [
     rgb(0x3fd0d0),
 ];
 
+#[cfg(feature = "series")]
 /// Light series palette in order series-1..6: `#1F6FD1`, `#17855A`, `#9A6200`, `#7B45C9`,
 /// `#C2392B`, `#0D7F86`. The same hues as the dark palette, darkened to keep 3:1 contrast.
 pub const SERIES_LIGHT: [Rgb; 6] = [
@@ -155,6 +158,7 @@ pub const DARK: Tokens = Tokens {
     unseen_text: rgb(0xf2b84b),
     cycle_head: rgb(0xd6e8ff),
     panel: rgb(0x181b21),
+    #[cfg(feature = "series")]
     series: SERIES_DARK,
     variant: ThemeVariant::Dark,
 };
@@ -196,6 +200,7 @@ pub const LIGHT: Tokens = Tokens {
     unseen_text: rgb(0x9a6200),
     cycle_head: rgb(0x163f80),
     panel: rgb(0xffffff),
+    #[cfg(feature = "series")]
     series: SERIES_LIGHT,
     variant: ThemeVariant::Light,
 };
@@ -210,7 +215,9 @@ pub fn tokens(variant: ThemeVariant) -> &'static Tokens {
 
 #[cfg(test)]
 mod tests {
-    use super::{Rgb, ThemeVariant, Tokens, DARK, LIGHT, SERIES_DARK, SERIES_LIGHT};
+    use super::{Rgb, ThemeVariant, Tokens, DARK, LIGHT};
+    #[cfg(feature = "series")]
+    use super::{SERIES_DARK, SERIES_LIGHT};
 
     const fn rgb(hex: u32) -> Rgb {
         [(hex >> 16) as u8, (hex >> 8) as u8, hex as u8]
@@ -253,6 +260,7 @@ mod tests {
             unseen_text: rgb(0xf2b84b),
             cycle_head: rgb(0xd6e8ff),
             panel: rgb(0x181b21),
+            #[cfg(feature = "series")]
             series: SERIES_DARK,
             variant: ThemeVariant::Dark,
         }
@@ -295,6 +303,7 @@ mod tests {
             unseen_text: rgb(0x9a6200),
             cycle_head: rgb(0x163f80),
             panel: rgb(0xffffff),
+            #[cfg(feature = "series")]
             series: SERIES_LIGHT,
             variant: ThemeVariant::Light,
         }
@@ -310,6 +319,7 @@ mod tests {
         assert_eq!(LIGHT, expected_light());
     }
 
+    #[cfg(feature = "series")]
     #[test]
     fn series_have_three_to_one_contrast_on_every_surface() {
         for t in [&DARK, &LIGHT] {
@@ -322,6 +332,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "series")]
     #[test]
     fn series_are_distinct_and_documented_values() {
         for palette in [SERIES_DARK, SERIES_LIGHT] {

@@ -38,6 +38,7 @@ const BRIEF_THEMES: [&str; 3] = ["prismattyc", "prismattyc-dark", "prismattyc-li
 const BLACK: Rgb = [0, 0, 0];
 const WHITE: Rgb = [0xff, 0xff, 0xff];
 const AA: f32 = 4.5;
+#[cfg(feature = "series")]
 const NON_TEXT: f32 = 3.0;
 
 /// Return whether a source is one of the unchanged built-in Graphite themes.
@@ -96,6 +97,7 @@ pub fn derive_tokens(source: &ThemeSource) -> Tokens {
         unseen_text: source.unseen_badge,
         cycle_head: crate::tokens::tokens(variant).cycle_head,
         panel: pane,
+        #[cfg(feature = "series")]
         series: crate::tokens::tokens(variant).series,
         variant,
     };
@@ -188,9 +190,12 @@ fn keep_text_readable(tokens: &mut Tokens) {
     tokens.muted_focus = readable(tokens.muted_focus, &[tokens.title_focus], AA);
     tokens.unseen_text = readable(tokens.unseen_text, &[tokens.bar, tokens.status_bar], AA);
     tokens.on_attention = readable(tokens.on_attention, &[tokens.attention], AA);
-    let surfaces = [tokens.ground, tokens.bar, tokens.panel, tokens.field];
-    for color in &mut tokens.series {
-        *color = readable(*color, &surfaces, NON_TEXT);
+    #[cfg(feature = "series")]
+    {
+        let surfaces = [tokens.ground, tokens.bar, tokens.panel, tokens.field];
+        for color in &mut tokens.series {
+            *color = readable(*color, &surfaces, NON_TEXT);
+        }
     }
 }
 
@@ -409,6 +414,7 @@ mod tests {
             unseen_text: rgb(0xe9b32a),
             cycle_head: rgb(0xd6e8ff),
             panel: rgb(0x1e1e1e),
+            #[cfg(feature = "series")]
             series: crate::tokens::SERIES_DARK,
             variant: ThemeVariant::Dark,
         }
@@ -557,6 +563,7 @@ mod tests {
         assert!(contrast_ratio(tokens.tab_text, tokens.bar) >= 4.5);
     }
 
+    #[cfg(feature = "series")]
     #[test]
     fn derived_series_keep_three_to_one_against_surfaces() {
         for source in [japanesque(), light_readability_probe(), brief_dark()] {
