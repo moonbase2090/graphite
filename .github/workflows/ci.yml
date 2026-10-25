@@ -37,6 +37,9 @@ jobs:
       - name: Run tests
         run: cargo test --locked
 
+      - name: Run tests (motion feature)
+        run: cargo test --locked --features motion
+
       - name: Build documentation
         run: cargo doc --no-deps --locked
         env:

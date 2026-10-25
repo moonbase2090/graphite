@@ -6,3 +6,8 @@ rust-version = "1.85"
 license = "MPL-2.0"
 publish = false
 repository = "https://github.com/moonbase2090/graphite"
+
+[features]
+default = []
+# Light-cycle easing and progress helpers (opt-in for pinned consumers).
+motion = []
