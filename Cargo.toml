@@ -13,6 +13,8 @@ default = []
 motion = []
 # Categorical chart series colors in `Tokens` (opt-in; adds a public field).
 series = []
+# Interaction state styles (focus, selection, disabled, error) for chrome widgets.
+states = []
 
 # Precompute terminal fallback palettes at startup (opt-in).
 terminal-palette = []
