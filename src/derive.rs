@@ -581,4 +581,20 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn accent_on_derived_themes_reaches_three_to_one() {
+        use crate::{accent, contrast_ratio, DEFAULT_ACCENT};
+        for source in [japanesque(), light_readability_probe(), brief_dark()] {
+            let t = derive_tokens(&source);
+            for focus in [DEFAULT_ACCENT, source.ansi[4]] {
+                let got = accent(&t, focus);
+                assert!(
+                    contrast_ratio(got, t.bar) >= 3.0,
+                    "{} {focus:?} -> {got:?}",
+                    source.id
+                );
+            }
+        }
+    }
 }

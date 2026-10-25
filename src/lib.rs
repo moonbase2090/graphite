@@ -21,7 +21,7 @@ mod translucency;
 
 pub use color::{
     accent, bar_color_name, bar_fills, contrast_ratio, mix_rgb, relative_luminance, step_bar_color,
-    BarColor,
+    BarColor, DEFAULT_ACCENT,
 };
 pub use derive::{bar_tokens, derive_tokens, theme_tokens, uses_brief, ThemeSource};
 pub use geom::Rect;

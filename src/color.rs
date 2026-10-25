@@ -116,7 +116,30 @@ pub fn step_bar_color(bar: Option<BarColor>, forward: bool, theme_bars: bool) ->
     order[next]
 }
 
-/// Nudge a focus color until it has the 3:1 non-text contrast required by WCAG.
+/// The default focus accent, `#62A8FF`.
+///
+/// Pass it to [`accent`] to get the accent for a token set. It already clears
+/// 3:1 against the dark bar, so [`crate::DARK`] keeps it unchanged; on light
+/// bars [`accent`] darkens it.
+pub const DEFAULT_ACCENT: Rgb = [0x62, 0xa8, 0xff];
+
+/// Returns `focus` adjusted so it has the 3:1 non-text contrast (WCAG 1.4.11)
+/// against `tokens.bar`.
+///
+/// Contract:
+/// - A `focus` that already has 3:1 against the bar is returned unchanged.
+/// - Otherwise it is mixed toward black when the bar is lighter than the text
+///   color, or toward white when it is darker, in steps of 24/256, until it
+///   reaches 3:1 or 24 steps have been taken. Hue is preserved only
+///   approximately; contrast is the guarantee.
+/// - Only the bar is checked. Callers drawing on other surfaces must check
+///   those themselves.
+///
+/// The focus color usually comes from [`DEFAULT_ACCENT`] or a host theme's
+/// ANSI blue (`ansi[4]`). [`crate::derive_tokens`] uses that same `ansi[4]` as
+/// the base for the focused title row (10%), its outline (22%), and the pane
+/// hover outline (40%), each mixed over the pane background, so a theme's blue
+/// drives both the derived focus tints and the accent a host passes here.
 pub fn accent(tokens: &Tokens, focus: Rgb) -> Rgb {
     let mut color = focus;
     let light_bar = relative_luminance(tokens.bar) > relative_luminance(tokens.text);
@@ -137,9 +160,11 @@ pub fn accent(tokens: &Tokens, focus: Rgb) -> Rgb {
 mod tests {
     use super::{
         accent, bar_color_name, bar_fills, contrast_ratio, relative_luminance, step_bar_color,
-        BarColor,
+        BarColor, DEFAULT_ACCENT,
     };
     use crate::tokens::{ThemeVariant, DARK, LIGHT};
+
+    const PIN_LIGHT: [u8; 3] = [0x4f, 0x89, 0xd1];
 
     const fn rgb(hex: u32) -> [u8; 3] {
         [(hex >> 16) as u8, (hex >> 8) as u8, hex as u8]
@@ -222,6 +247,29 @@ mod tests {
         }
         assert_eq!(bar_color_name(Some(BarColor::Plum)), "Plum");
         assert_eq!(bar_color_name(None), "Theme");
+    }
+
+    #[test]
+    fn default_accent_is_the_documented_value() {
+        assert_eq!(DEFAULT_ACCENT, rgb(0x62a8ff));
+    }
+
+    #[test]
+    fn default_accent_is_kept_on_dark_and_darkened_on_light() {
+        assert_eq!(accent(&DARK, DEFAULT_ACCENT), DEFAULT_ACCENT);
+        let light = accent(&LIGHT, DEFAULT_ACCENT);
+        assert_ne!(light, DEFAULT_ACCENT);
+        assert!(contrast_ratio(light, LIGHT.bar) >= 3.0);
+        assert!(relative_luminance(light) < relative_luminance(DEFAULT_ACCENT));
+        assert_eq!(light, PIN_LIGHT);
+    }
+
+    #[test]
+    fn accent_is_idempotent() {
+        for tokens in [&DARK, &LIGHT] {
+            let once = accent(tokens, DEFAULT_ACCENT);
+            assert_eq!(accent(tokens, once), once);
+        }
     }
 
     #[test]
