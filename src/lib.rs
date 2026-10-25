@@ -33,7 +33,10 @@ pub use derive::{bar_tokens, derive_tokens, theme_tokens, uses_brief, ThemeSourc
 pub use geom::Rect;
 pub use legend::{legend_keys, LegendChip, LegendPaint, LegendRun, LegendText};
 #[cfg(feature = "motion")]
-pub use motion::{light_cycle_traced_samples, MotionCurve};
+pub use motion::{
+    capped_motion_duration, light_cycle_traced_samples, MotionCurve, MOTION_EMPHASIS, MOTION_MAX,
+    MOTION_MICRO, MOTION_STANDARD,
+};
 #[cfg(feature = "terminal-palette")]
 pub use palette::{terminal_palette, xterm256, Ansi16, TerminalToken};
 pub use pane::{activity_header_rects, pane_handle_rect, status_width, PaneStatus};
