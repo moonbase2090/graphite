@@ -14,6 +14,8 @@ mod ring;
 mod scale;
 mod side_rail;
 mod sidebar;
+#[cfg(feature = "states")]
+mod state;
 mod tabs_bar;
 mod text;
 mod tokens;
@@ -52,6 +54,8 @@ pub use sidebar::{
     sidebar_toggle_rect, SidebarHeaderLayout, SidebarHit, SidebarLayout, SidebarRow,
     SIDEBAR_ACTIONS, SIDEBAR_ARRANGE,
 };
+#[cfg(feature = "states")]
+pub use state::{state_style, ColorDepth, StateStyle, WidgetState};
 pub use tabs_bar::{
     bar_hit, bar_layout, drop_target_rect, shift_bar, BarHit, BarLayout, Dot, DropTarget, TabSlot,
     TabText,
