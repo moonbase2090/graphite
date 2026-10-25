@@ -40,3 +40,6 @@ required-features = ["serde"]
 [dependencies]
 unicode-segmentation = "1.13.3"
 toml = { version = "1", optional = true, default-features = false, features = ["parse", "display", "serde"] }
+
+[dev-dependencies]
+proptest = { version = "=1.6.0", default-features = false, features = ["std"] }
