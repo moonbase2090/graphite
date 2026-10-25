@@ -128,10 +128,10 @@ pub const DEFAULT_ACCENT: Rgb = [0x62, 0xa8, 0xff];
 ///
 /// Contract:
 /// - A `focus` that already has 3:1 against the bar is returned unchanged.
-/// - Otherwise it is mixed toward black when the bar is lighter than the text
-///   color, or toward white when it is darker, in steps of 24/256, until it
-///   reaches 3:1 or 24 steps have been taken. Hue is preserved only
-///   approximately; contrast is the guarantee.
+/// - Otherwise it is mixed, in steps of 24/256, toward black or white,
+///   whichever contrasts more with the bar, until it reaches 3:1. The text
+///   color plays no part. Hue is preserved only approximately; contrast is
+///   the guarantee, and it holds for every bar color (see the sweep test).
 /// - Only the bar is checked. Callers drawing on other surfaces must check
 ///   those themselves.
 ///
@@ -142,16 +142,19 @@ pub const DEFAULT_ACCENT: Rgb = [0x62, 0xa8, 0xff];
 /// drives both the derived focus tints and the accent a host passes here.
 pub fn accent(tokens: &Tokens, focus: Rgb) -> Rgb {
     let mut color = focus;
-    let light_bar = relative_luminance(tokens.bar) > relative_luminance(tokens.text);
+    // Move toward whichever of black and white contrasts more with the bar, so
+    // the target is reachable for every bar color, whatever the text color is.
+    let pole =
+        if contrast_ratio([255, 255, 255], tokens.bar) >= contrast_ratio([0, 0, 0], tokens.bar) {
+            [255, 255, 255]
+        } else {
+            [0, 0, 0]
+        };
     for _ in 0..24 {
         if contrast_ratio(color, tokens.bar) >= 3.0 {
             break;
         }
-        color = if light_bar {
-            mix_rgb(color, [0, 0, 0], 24)
-        } else {
-            mix_rgb(color, [255, 255, 255], 24)
-        };
+        color = mix_rgb(color, pole, 24);
     }
     color
 }
@@ -262,6 +265,37 @@ mod tests {
         assert!(contrast_ratio(light, LIGHT.bar) >= 3.0);
         assert!(relative_luminance(light) < relative_luminance(DEFAULT_ACCENT));
         assert_eq!(light, PIN_LIGHT);
+    }
+
+    #[test]
+    fn accent_reaches_three_to_one_on_every_bar_whatever_the_text() {
+        // A mid-gray bar with white text used to pick the unreachable pole.
+        let mut tokens = DARK;
+        tokens.bar = [200, 200, 200];
+        tokens.text = [255, 255, 255];
+        assert!(contrast_ratio(accent(&tokens, tokens.bar), tokens.bar) >= 3.0);
+
+        for text in [[0, 0, 0], [255, 255, 255]] {
+            tokens.text = text;
+            let mut bars: Vec<[u8; 3]> = (0..=255u8).map(|v| [v, v, v]).collect();
+            for r in (0..=255u8).step_by(51) {
+                for g in (0..=255u8).step_by(51) {
+                    for b in (0..=255u8).step_by(51) {
+                        bars.push([r, g, b]);
+                    }
+                }
+            }
+            for bar in bars {
+                tokens.bar = bar;
+                for focus in [bar, DEFAULT_ACCENT] {
+                    let got = accent(&tokens, focus);
+                    assert!(
+                        contrast_ratio(got, bar) >= 3.0,
+                        "bar {bar:?} focus {focus:?} -> {got:?}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]
