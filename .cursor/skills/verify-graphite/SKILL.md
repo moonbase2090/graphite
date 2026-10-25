@@ -33,7 +33,7 @@ feature configuration with Rust 1.85.0:
 
 ```sh
 cargo fmt --all -- --check
-for feature_args in '' '--features motion' '--no-default-features'; do
+for feature_args in '' '--features motion' '--no-default-features' '--all-features'; do
     cargo clippy --workspace --locked --all-targets $feature_args -- -D warnings
     cargo test --workspace --locked $feature_args
     RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked $feature_args
