@@ -155,3 +155,13 @@ at Ansi16. `SelectedFocus` adds `marker=true`. `Normal`, `Hover`, `Disabled`,
 and `Error` print all four flags `false` at every depth. Run it from a clean
 local VM and record the exact commit and stdout. The `states` feature is off
 by default.
+
+## TOML theme files
+
+Run `cargo test --locked --features serde` and
+`cargo run --quiet --locked --example theme_toml --features serde`.
+The example must print `dark: 35 lines, round trip equal`,
+`light: 36 lines, round trip equal`, and
+``bad hex: `ground` must be a color like "#1A2B3C", found "#10121"``.
+Run it from a clean local VM and record the exact commit and stdout. The
+`serde` feature is off by default and pulls in the `toml` crate.
