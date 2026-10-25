@@ -1,0 +1,77 @@
+#!/bin/bash
+# Fail if public release text or artifacts reveal private infrastructure.
+# Usage: scripts/check-release-text.sh [ARTIFACT...]
+# Also scans $RELEASE_TITLE, $RELEASE_BODY and $RELEASE_TAG_MESSAGE if set.
+# Extra patterns (one ERE per line) come from the optional file
+# ~/.config/moonbase/release-denylist.txt and the optional RELEASE_DENYLIST
+# environment variable. Missing sources are skipped. Matched text is never
+# printed, only file:line.
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+
+patterns=(
+  'DESKTOP-[A-Z0-9]+'
+  '\.local\b'
+  '/Users/'
+  '/home/[a-z]'
+  'C:\\Users'
+  '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+  '\b(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}'
+  'github_pat_[A-Za-z0-9_]{20,}'
+  '\b10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\b'
+  '\b192\.168\.[0-9]{1,3}\.[0-9]{1,3}\b'
+  '\b172\.(1[6-9]|2[0-9]|3[01])\.[0-9]{1,3}\.[0-9]{1,3}\b'
+)
+email_re='[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
+allowed_email='322824348+mb2090@users.noreply.github.com'
+
+add_patterns() {
+  while IFS= read -r line; do
+    [ -n "$line" ] && patterns+=("$line")
+  done
+}
+denylist_file="${HOME:-}/.config/moonbase/release-denylist.txt"
+[ -f "$denylist_file" ] && add_patterns < "$denylist_file"
+[ -n "${RELEASE_DENYLIST:-}" ] && add_patterns <<< "$RELEASE_DENYLIST"
+
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT
+
+targets=()
+while IFS= read -r f; do
+  case "$f" in
+    CHANGELOG*|RELEASE*|README*|docs/*|*.md) targets+=("$f") ;;
+  esac
+done < <(git ls-files)
+for a in "$@"; do
+  [ -f "$a" ] || { echo "missing artifact: $a" >&2; exit 2; }
+  # Binaries and archives: scan printable strings.
+  strings -a "$a" > "$scratch/$(basename "$a").strings"
+  targets+=("$scratch/$(basename "$a").strings")
+done
+for v in RELEASE_TITLE RELEASE_BODY RELEASE_TAG_MESSAGE; do
+  if [ -n "${!v:-}" ]; then
+    printf '%s\n' "${!v}" > "$scratch/$v"
+    targets+=("$scratch/$v")
+  fi
+done
+
+status=0
+for f in "${targets[@]}"; do
+  [ -f "$f" ] || continue
+  for p in "${patterns[@]}"; do
+    if hits=$(grep -nE -e "$p" "$f" 2>/dev/null | cut -d: -f1); [ -n "$hits" ]; then
+      for n in $hits; do echo "${f#"$scratch"/}:$n: matches a release-text rule"; done
+      status=1
+    fi
+  done
+  while IFS= read -r hit; do
+    n=${hit%%:*}; text=${hit#*:}
+    for e in $(grep -oE -e "$email_re" <<< "$text"); do
+      if [ "$e" != "$allowed_email" ]; then
+        echo "${f#"$scratch"/}:$n: disallowed email address"; status=1
+      fi
+    done
+  done < <(grep -nE -e "$email_re" "$f" 2>/dev/null || true)
+done
+exit $status
