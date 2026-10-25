@@ -11,3 +11,5 @@ repository = "https://github.com/moonbase2090/graphite"
 default = []
 # Light-cycle easing and progress helpers (opt-in for pinned consumers).
 motion = []
+# Categorical chart series colors in `Tokens` (opt-in; adds a public field).
+series = []

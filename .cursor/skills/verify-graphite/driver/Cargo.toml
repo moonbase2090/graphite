@@ -10,4 +10,4 @@ name = "verify-graphite"
 path = "src/main.rs"
 
 [dependencies]
-graphite-core = { path = "../../../.." }
+graphite-core = { path = "../../../..", features = ["series"] }

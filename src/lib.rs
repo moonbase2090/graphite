@@ -53,7 +53,9 @@ pub use tabs_bar::{
     TabText,
 };
 pub use text::{ellipsize, Face, TextMetrics};
-pub use tokens::{tokens, Rgb, ThemeVariant, Tokens, DARK, LIGHT, SERIES_DARK, SERIES_LIGHT};
+pub use tokens::{tokens, Rgb, ThemeVariant, Tokens, DARK, LIGHT};
+#[cfg(feature = "series")]
+pub use tokens::{SERIES_DARK, SERIES_LIGHT};
 pub use translucency::{alpha_policy, translucency_roles, AlphaPolicy, TranslucencyRole};
 
 #[cfg(test)]
