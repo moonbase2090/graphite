@@ -38,6 +38,7 @@ const BRIEF_THEMES: [&str; 3] = ["prismattyc", "prismattyc-dark", "prismattyc-li
 const BLACK: Rgb = [0, 0, 0];
 const WHITE: Rgb = [0xff, 0xff, 0xff];
 const AA: f32 = 4.5;
+const NON_TEXT: f32 = 3.0;
 
 /// Return whether a source is one of the unchanged built-in Graphite themes.
 pub fn uses_brief(source: &ThemeSource) -> bool {
@@ -95,6 +96,7 @@ pub fn derive_tokens(source: &ThemeSource) -> Tokens {
         unseen_text: source.unseen_badge,
         cycle_head: crate::tokens::tokens(variant).cycle_head,
         panel: pane,
+        series: crate::tokens::tokens(variant).series,
         variant,
     };
     keep_text_readable(&mut tokens);
@@ -186,6 +188,10 @@ fn keep_text_readable(tokens: &mut Tokens) {
     tokens.muted_focus = readable(tokens.muted_focus, &[tokens.title_focus], AA);
     tokens.unseen_text = readable(tokens.unseen_text, &[tokens.bar, tokens.status_bar], AA);
     tokens.on_attention = readable(tokens.on_attention, &[tokens.attention], AA);
+    let surfaces = [tokens.ground, tokens.bar, tokens.panel, tokens.field];
+    for color in &mut tokens.series {
+        *color = readable(*color, &surfaces, NON_TEXT);
+    }
 }
 
 fn derived_tab_active_bg(variant: ThemeVariant, chrome_bg: Rgb, chrome_fg: Rgb) -> Rgb {
@@ -403,6 +409,7 @@ mod tests {
             unseen_text: rgb(0xe9b32a),
             cycle_head: rgb(0xd6e8ff),
             panel: rgb(0x1e1e1e),
+            series: crate::tokens::SERIES_DARK,
             variant: ThemeVariant::Dark,
         }
     }
@@ -548,5 +555,23 @@ mod tests {
         let tokens = derive_tokens(&murky);
         assert!(contrast_ratio(tokens.text, tokens.bar) >= 4.5);
         assert!(contrast_ratio(tokens.tab_text, tokens.bar) >= 4.5);
+    }
+
+    #[test]
+    fn derived_series_keep_three_to_one_against_surfaces() {
+        for source in [japanesque(), light_readability_probe(), brief_dark()] {
+            let t = derive_tokens(&source);
+            for color in t.series {
+                for surface in [t.ground, t.bar, t.panel, t.field] {
+                    assert!(
+                        crate::contrast_ratio(color, surface) >= 3.0,
+                        "{:?} on {:?} in {}",
+                        color,
+                        surface,
+                        source.id
+                    );
+                }
+            }
+        }
     }
 }
