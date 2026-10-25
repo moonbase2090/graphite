@@ -26,6 +26,27 @@ Do not start a second drive in the same state directory while `driver.pid` names
 
 Teardown is `.cursor/skills/verify-graphite/scripts/cleanup.sh`. It signals the process group of the cargo process recorded in `driver.pid`, which includes the compiler or driver cargo started. It does not signal a process by name. It does not delete proof files.
 
+## Workspace CI verification
+
+After changing build or CI configuration, run the same checks for each workspace
+feature configuration with Rust 1.85.0:
+
+```sh
+cargo fmt --all -- --check
+for feature_args in '' '--features motion' '--no-default-features'; do
+    cargo clippy --workspace --locked --all-targets $feature_args -- -D warnings
+    cargo test --workspace --locked $feature_args
+    RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked $feature_args
+    cargo check --workspace --all-targets --locked $feature_args
+done
+```
+
+Run this block in a POSIX shell so each feature argument expands into separate
+words. CI repeats these checks on Linux and macOS. The default jobs keep the
+existing `Checks (ubuntu-latest)` and `Checks (macos-latest)` names for branch
+protection. Feature jobs include the feature configuration in their names.
+Record the PR's green CI run link as cross-platform proof.
+
 ## Doctor
 
 Run `.cursor/skills/verify-graphite/scripts/doctor.sh` before the first drive, and again after a drive fails.
