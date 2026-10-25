@@ -18,3 +18,7 @@ terminal-palette = []
 [[example]]
 name = "terminal_palettes"
 required-features = ["terminal-palette"]
+
+[[example]]
+name = "theme_crossfade"
+required-features = ["motion"]
