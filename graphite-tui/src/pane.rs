@@ -1,12 +1,13 @@
 //! Pane chrome widget: border, title row, status.
 
-use crate::cells::{cell_rect, fill, mid_row, text, text_right};
+use crate::cells::{cell_rect, fill, mid_row, text, text_right, Small};
 use crate::style::style;
 use graphite_core::{PaneStatus, Rect as PxRect, Tokens};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::symbols::border::ROUNDED;
 use ratatui::widgets::Widget;
+use std::fmt::Write;
 
 /// A pane outline with a title row. The pane body is left untouched.
 pub struct PaneChrome<'a> {
@@ -78,22 +79,26 @@ impl Widget for PaneChrome<'_> {
             (t.text, t.ground)
         };
         fill(buf, head, style(fg, bg));
+        let mut mail = Small::new();
         let (label, status_fg) = match self.status {
-            PaneStatus::Attention => ("needs you".to_owned(), t.attention),
-            PaneStatus::Mail(n) => (format!("{n} mail"), t.unseen_text),
-            PaneStatus::Unseen => ("new output".to_owned(), t.unseen_text),
-            PaneStatus::Running => ("running".to_owned(), t.working),
-            PaneStatus::Focused => ("focused".to_owned(), t.muted_focus),
-            PaneStatus::Quiet => (String::new(), t.idle),
+            PaneStatus::Attention => ("needs you", t.attention),
+            PaneStatus::Mail(n) => {
+                let _ = write!(mail, "{n} mail");
+                (mail.as_str(), t.unseen_text)
+            }
+            PaneStatus::Unseen => ("new output", t.unseen_text),
+            PaneStatus::Running => ("running", t.working),
+            PaneStatus::Focused => ("focused", t.muted_focus),
+            PaneStatus::Quiet => ("", t.idle),
         };
         let y = mid_row(head);
         text(buf, head.x + 1, y, head.right(), "●", style(status_fg, bg));
         let right = head.right().saturating_sub(1);
-        let status_w = crate::cells::display_width(&label);
+        let status_w = crate::cells::display_width(label);
         let name_limit = right.saturating_sub(status_w + 1).max(head.x + 3);
         text(buf, head.x + 3, y, name_limit, self.name, style(fg, bg));
         if !label.is_empty() {
-            text_right(buf, right, y, head.x + 3, &label, style(status_fg, bg));
+            text_right(buf, right, y, head.x + 3, label, style(status_fg, bg));
         }
     }
 }

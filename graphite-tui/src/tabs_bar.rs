@@ -33,15 +33,10 @@ impl Widget for TabsBar<'_> {
 
         if let Some(r) = cell_rect(area, l.dropdown) {
             fill(buf, r, style(t.text_strong, t.tab_hover));
-            let label = format!(" {} ▾", l.space_label);
-            text(
-                buf,
-                r.x,
-                mid_row(r),
-                r.right(),
-                &label,
-                style(t.text_strong, t.tab_hover),
-            );
+            let (y, s) = (mid_row(r), style(t.text_strong, t.tab_hover));
+            text(buf, r.x + 1, y, r.right(), &l.space_label, s);
+            let end = r.x + 1 + display_width(&l.space_label);
+            text(buf, end, y, r.right(), " ▾", s);
         }
         let div_x = area.x + (l.divider_x / crate::CELL_W) as u16;
         if div_x < limit {

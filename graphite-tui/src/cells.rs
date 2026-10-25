@@ -71,6 +71,38 @@ pub(crate) fn text_right(buf: &mut Buffer, right: u16, y: u16, left: u16, s: &st
     text(buf, x, y, right, s, style);
 }
 
+/// Fixed-capacity text for labels built during render, so rendering never allocates.
+pub(crate) struct Small {
+    bytes: [u8; 40],
+    len: usize,
+}
+
+impl Small {
+    pub(crate) fn new() -> Self {
+        Self {
+            bytes: [0; 40],
+            len: 0,
+        }
+    }
+
+    pub(crate) fn as_str(&self) -> &str {
+        std::str::from_utf8(&self.bytes[..self.len]).unwrap_or("")
+    }
+}
+
+impl std::fmt::Write for Small {
+    fn write_str(&mut self, s: &str) -> std::fmt::Result {
+        let room = self.bytes.len() - self.len;
+        let mut n = s.len().min(room);
+        while !s.is_char_boundary(n) {
+            n -= 1;
+        }
+        self.bytes[self.len..self.len + n].copy_from_slice(&s.as_bytes()[..n]);
+        self.len += n;
+        Ok(())
+    }
+}
+
 pub(crate) fn display_width(s: &str) -> u16 {
     UnicodeWidthStr::width(s) as u16
 }

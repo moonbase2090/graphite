@@ -26,14 +26,8 @@ impl Widget for Legend<'_> {
         for chip in &self.paint.chips {
             if let Some(r) = cell_rect(area, chip.rect) {
                 fill(buf, r, style(t.key_text, t.key));
-                text(
-                    buf,
-                    r.x,
-                    mid_row(r),
-                    r.right(),
-                    &format!(" {} ", chip.label),
-                    style(t.key_text, t.key),
-                );
+                let (y, s) = (mid_row(r), style(t.key_text, t.key));
+                text(buf, r.x + 1, y, r.right(), &chip.label, s);
             }
         }
         for item in self.paint.texts.iter().chain(&self.paint.caption_rects) {
