@@ -23,5 +23,9 @@ terminal-palette = []
 name = "terminal_palettes"
 required-features = ["terminal-palette"]
 
+[[example]]
+name = "state_styles"
+required-features = ["states"]
+
 [dependencies]
 unicode-segmentation = "1.13.3"

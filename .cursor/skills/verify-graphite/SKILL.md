@@ -128,3 +128,16 @@ approved release, run `python3 scripts/check-release.py --tag vX.Y.Z` against th
 prepared release commit. It must reject tags whose version differs from the
 workspace or whose changelog section is absent. These commands perform no
 release writes. The tag workflow repeats the check and workspace tests/docs.
+
+## Interaction states
+
+Run `cargo test --locked --features states` and
+`cargo run --quiet --locked --example state_styles --features states`.
+The example prints one line per depth and state. Expected modifiers:
+`Focus` is `thick=true marker=true bold=true` at every depth, with
+`reverse=false` at TrueColor and Ansi256 and `reverse=true` at Ansi16.
+`Selected` is `thick=false marker=false bold=false`, with `reverse=true` only
+at Ansi16. `SelectedFocus` adds `marker=true`. `Normal`, `Hover`, `Disabled`,
+and `Error` print all four flags `false` at every depth. Run it from a clean
+local VM and record the exact commit and stdout. The `states` feature is off
+by default.
