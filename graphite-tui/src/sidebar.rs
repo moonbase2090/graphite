@@ -1,11 +1,12 @@
 //! Sidebar widget.
 
-use crate::cells::{cell_rect, display_width, fill, mid_row, text, text_right};
+use crate::cells::{cell_rect, display_width, fill, mid_row, text, text_right, Small};
 use crate::style::{dot_color, style};
 use graphite_core::{SidebarLayout, SidebarRow, Tokens, SIDEBAR_ACTIONS};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::widgets::Widget;
+use std::fmt::Write;
 
 /// Draws a [`SidebarLayout`] with its visible rows.
 pub struct Sidebar<'a> {
@@ -79,14 +80,15 @@ impl Widget for Sidebar<'_> {
             }
             x += 2;
             let mut right = r.right().saturating_sub(1);
+            let mut badge = Small::new();
             if row.needs_you > 0 {
-                let s = format!("{} needs you", row.needs_you);
-                text_right(buf, right, y, x, &s, style(t.attention, bg));
-                right = right.saturating_sub(display_width(&s) + 1);
+                let _ = write!(badge, "{} needs you", row.needs_you);
+                text_right(buf, right, y, x, badge.as_str(), style(t.attention, bg));
+                right = right.saturating_sub(display_width(badge.as_str()) + 1);
             } else if row.mail > 0 {
-                let s = format!("{} mail", row.mail);
-                text_right(buf, right, y, x, &s, style(t.unseen_text, bg));
-                right = right.saturating_sub(display_width(&s) + 1);
+                let _ = write!(badge, "{} mail", row.mail);
+                text_right(buf, right, y, x, badge.as_str(), style(t.unseen_text, bg));
+                right = right.saturating_sub(display_width(badge.as_str()) + 1);
             }
             text(buf, x, y, right.max(x), row.label, style(fg, bg));
         }
