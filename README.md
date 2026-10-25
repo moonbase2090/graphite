@@ -65,8 +65,8 @@ every widget as true-color ANSI.
 
 ## Contributing
 
-See [CONTRIBUTING.md](https\:\/\/github\.com\/moonbase2090\/graphite\/blob\/main/CONTRIBUTING.md) for the workflow and
-[REVIEW_POLICY.md](https\:\/\/github\.com\/moonbase2090\/graphite\/blob\/main/REVIEW_POLICY.md) for what needs review before merge.
+See [CONTRIBUTING.md](https://github.com/moonbase2090/graphite/blob/main/CONTRIBUTING.md) for the workflow and
+[REVIEW_POLICY.md](https://github.com/moonbase2090/graphite/blob/main/REVIEW_POLICY.md) for what needs review before merge.
 
 ## License
 
