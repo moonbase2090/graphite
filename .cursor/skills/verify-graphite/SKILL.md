@@ -128,3 +128,28 @@ approved release, run `python3 scripts/check-release.py --tag vX.Y.Z` against th
 prepared release commit. It must reject tags whose version differs from the
 workspace or whose changelog section is absent. These commands perform no
 release writes. The tag workflow repeats the check and workspace tests/docs.
+
+## Widget gallery
+
+The `gallery` example in `graphite-tui` renders every chrome widget (tabs bar,
+side rail, sidebar, pane chrome, legend, theme picker) as ANSI text. It has six
+modes: `dark` or `light`, each at `truecolor`, `256`, or `16` color depth.
+
+Commands, from the repository root, with Rust 1.85 on `PATH`:
+
+```sh
+cargo test --locked -p graphite-tui --example gallery
+cargo run --quiet --locked -p graphite-tui --example gallery -- dark 16
+cargo run --quiet --locked -p graphite-tui --example gallery -- all
+```
+
+Expected output:
+
+- `gallery all` prints six `== <theme> <depth>` headings in this order: `dark truecolor`, `dark 256`, `dark 16`, `light truecolor`, `light 256`, `light 16`. It exits 0.
+- Each mode prints the same plain-text tabs-bar line after the escape codes are removed: `  Graphite ▾     │ ● build 2  ×   ● review  needs you  ×   ● notes ×  +`.
+- The `gallery` example tests pass: `chip_active` maps to ANSI background 40 and `tab_hover` to 100 in the dark 16-color mode, and truecolor and 256 keep the real values.
+
+Screenshot procedure for review: run the `all` command in a clean local VM
+using the Tart recipe in `~/teams/tart-gui-proof`, and capture the host VNC
+terminal window. Record the exact commit, the command, and the image. Use one
+VM at a time; the queue is `~/teams/VM-QUEUE.md`.
