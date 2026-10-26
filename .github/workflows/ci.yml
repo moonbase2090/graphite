@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -10,7 +11,7 @@ permissions:
 
 jobs:
   checks:
-    name: Checks (${{ matrix.os }})
+    name: ${{ matrix.features == 'default' && format('Checks ({0})', matrix.os) || format('Checks ({0}, {1})', matrix.os, matrix.features) }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -18,6 +19,9 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
+        features: [default, motion, minimal]
+    env:
+      FEATURE_ARGS: ${{ matrix.features == 'motion' && '--features motion' || matrix.features == 'minimal' && '--no-default-features' || '' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -32,21 +36,18 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Run Clippy
-        run: cargo clippy --locked --all-targets -- -D warnings
+        run: cargo clippy --workspace --locked --all-targets $FEATURE_ARGS -- -D warnings
 
       - name: Run tests
-        run: cargo test --locked
-
-      - name: Run tests (motion feature)
-        run: cargo test --locked --features motion
+        run: cargo test --workspace --locked $FEATURE_ARGS
 
       - name: Build documentation
-        run: cargo doc --no-deps --locked
+        run: cargo doc --workspace --no-deps --locked $FEATURE_ARGS
         env:
           RUSTDOCFLAGS: -D warnings
 
       - name: Check with Rust 1.85
-        run: cargo +1.85 check --locked
+        run: cargo +1.85.0 check --workspace --all-targets --locked $FEATURE_ARGS
 
   deny:
     name: cargo deny
