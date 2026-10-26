@@ -46,6 +46,11 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
 
+      - name: Check release text
+        run: scripts/check-release-text.sh
+        env:
+          RELEASE_DENYLIST: ${{ secrets.RELEASE_DENYLIST }}
+
       - name: Check with Rust 1.85
         run: cargo +1.85.0 check --workspace --all-targets --locked $FEATURE_ARGS
 

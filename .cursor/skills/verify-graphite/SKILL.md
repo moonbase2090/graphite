@@ -128,3 +128,17 @@ approved release, run `python3 scripts/check-release.py --tag vX.Y.Z` against th
 prepared release commit. It must reject tags whose version differs from the
 workspace or whose changelog section is absent. These commands perform no
 release writes. The tag workflow repeats the check and workspace tests/docs.
+
+## Release text check
+
+`scripts/check-release-text.sh` fails when release text or artifacts reveal
+private infrastructure. Run it with bash from the repository root, optionally
+passing built artifacts as arguments. Exit codes: 0 clean, 1 a rule matched
+(output names file and line, never the matched text), 2 a denylist expression
+is malformed or an artifact is missing.
+
+Run the regression cases with `bash scripts/tests/test-check-release-text.sh`.
+They must print `all release-text cases passed`. The cases cover a clean tree,
+a rejected artifact alone, a rejected artifact followed by a clean artifact with
+the same basename, a trailing blank denylist line with and without a match, and
+a malformed expression.
