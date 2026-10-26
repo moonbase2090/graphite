@@ -149,7 +149,6 @@ Expected output:
 - Each mode prints the same plain-text tabs-bar line after the escape codes are removed: `  Graphite ▾     │ ● build 2  ×   ● review  needs you  ×   ● notes ×  +`.
 - The `gallery` example tests pass: `chip_active` maps to ANSI background 40 and `tab_hover` to 100 in the dark 16-color mode, and truecolor and 256 keep the real values.
 
-Screenshot procedure for review: run the `all` command in a clean local VM
-using the Tart recipe in `~/teams/tart-gui-proof`, and capture the host VNC
-terminal window. Record the exact commit, the command, and the image. Use one
-VM at a time; the queue is `~/teams/VM-QUEUE.md`.
+Screenshot procedure for review: run the `all` command in a clean local
+virtual macOS machine, then capture the host's view of the terminal window.
+Record the exact commit, the command, and the image with the review.
