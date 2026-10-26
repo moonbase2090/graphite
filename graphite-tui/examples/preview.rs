@@ -12,6 +12,9 @@ use ratatui::layout::Rect;
 use ratatui::style::Color;
 use ratatui::widgets::Widget;
 
+#[cfg(feature = "cell-design")]
+use graphite_tui::BorderStyle;
+
 fn dump(buf: &Buffer) {
     let a = buf.area;
     for y in a.y..a.bottom() {
@@ -94,9 +97,27 @@ fn main() {
 
     let area = Rect::new(0, 0, 40, 6);
     let slot = PxRect::new(0, 0, 40 * CELL_W, 6 * CELL_H);
-    let mut buf = Buffer::empty(area);
-    PaneChrome::new(slot, "agent-1", PaneStatus::Mail(2), true, t).render(area, &mut buf);
-    dump(&buf);
+    #[cfg(feature = "cell-design")]
+    for (border_style, ascii) in [
+        (BorderStyle::Rounded, false),
+        (BorderStyle::Plain, false),
+        (BorderStyle::Thick, false),
+        (BorderStyle::Rounded, true),
+    ] {
+        println!("PaneChrome border={border_style:?} ascii={ascii}");
+        let mut buf = Buffer::empty(area);
+        PaneChrome::new(slot, "agent-1", PaneStatus::Mail(2), true, t)
+            .border_style(border_style)
+            .ascii_borders(ascii)
+            .render(area, &mut buf);
+        dump(&buf);
+    }
+    #[cfg(not(feature = "cell-design"))]
+    {
+        let mut buf = Buffer::empty(area);
+        PaneChrome::new(slot, "agent-1", PaneStatus::Mail(2), true, t).render(area, &mut buf);
+        dump(&buf);
+    }
 
     let runs = [
         LegendRun::Keys {

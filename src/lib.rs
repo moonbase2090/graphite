@@ -1,5 +1,7 @@
 //! Core types and algorithms shared by Graphite consumers.
 
+#[cfg(feature = "cell-design")]
+mod cell_design;
 mod color;
 mod derive;
 mod geom;
@@ -19,6 +21,11 @@ mod text;
 mod tokens;
 mod translucency;
 
+#[cfg(feature = "cell-design")]
+pub use cell_design::{
+    BorderGlyphs, BorderStyle, SubcellGlyphs, ASCII_FILL, BLOCK_TITLE_INSET, CELL_SPACING,
+    EIGHTH_BLOCKS, SUBCELL_GLYPH_ORDER,
+};
 pub use color::{
     accent, bar_color_name, bar_fills, contrast_ratio, mix_rgb, relative_luminance, step_bar_color,
     BarColor,

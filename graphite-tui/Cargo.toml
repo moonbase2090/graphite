@@ -8,6 +8,10 @@ publish = false
 repository = "https://github.com/moonbase2090/graphite"
 description = "Ratatui chrome widgets drawn from Graphite tokens."
 
+[features]
+default = []
+cell-design = ["graphite-core/cell-design"]
+
 [dependencies]
 graphite-core = { path = ".." }
 ratatui = { version = "0.29", default-features = false }

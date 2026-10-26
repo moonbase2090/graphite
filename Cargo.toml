@@ -20,9 +20,16 @@ series = []
 # Precompute terminal fallback palettes at startup (opt-in).
 terminal-palette = []
 
+# Terminal-cell spacing, borders and glyph choices (opt-in).
+cell-design = []
+
 [[example]]
 name = "terminal_palettes"
 required-features = ["terminal-palette"]
+
+[[example]]
+name = "cell_design"
+required-features = ["cell-design"]
 
 [dependencies]
 unicode-segmentation = "1.13.3"

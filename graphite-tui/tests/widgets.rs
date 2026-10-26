@@ -13,6 +13,11 @@ use ratatui::style::Color;
 use ratatui::widgets::Widget;
 use std::path::PathBuf;
 
+#[cfg(feature = "cell-design")]
+use graphite_tui::{
+    BorderStyle, ASCII_FILL, BLOCK_TITLE_INSET, CELL_SPACING, EIGHTH_BLOCKS, SUBCELL_GLYPH_ORDER,
+};
+
 fn rgb(c: [u8; 3]) -> Color {
     Color::Rgb(c[0], c[1], c[2])
 }
@@ -143,6 +148,38 @@ fn pane_chrome_snapshot_and_colors() {
     PaneChrome::new(slot, "agent-2", PaneStatus::Quiet, false, &LIGHT).render(area, &mut buf);
     check("pane_quiet", &buf);
     assert_eq!(buf[(0, 0)].fg, rgb(LIGHT.hairline));
+}
+
+#[cfg(feature = "cell-design")]
+#[test]
+fn pane_chrome_uses_cell_design_border_and_title_tokens() {
+    let area = Rect::new(0, 0, 40, 6);
+    let slot = PxRect::new(0, 0, 40 * CELL_W, 6 * CELL_H);
+    let mut buf = Buffer::empty(area);
+    PaneChrome::new(slot, "agent", PaneStatus::Quiet, false, &DARK)
+        .border_style(BorderStyle::Thick)
+        .render(area, &mut buf);
+    assert_eq!(buf[(0, 0)].symbol(), "┏");
+    assert_eq!(buf[(1, 0)].symbol(), "━");
+    assert_eq!(buf[(0, 1)].symbol(), "┃");
+    assert_eq!(buf[(39, 5)].symbol(), "┛");
+    assert_eq!(buf[(4, 1)].symbol(), "a");
+
+    let mut ascii = Buffer::empty(area);
+    PaneChrome::new(slot, "agent", PaneStatus::Quiet, false, &DARK)
+        .border_style(BorderStyle::Plain)
+        .ascii_borders(true)
+        .render(area, &mut ascii);
+    assert_eq!(ascii[(0, 0)].symbol(), "+");
+    assert_eq!(ascii[(1, 0)].symbol(), "-");
+    assert_eq!(ascii[(0, 1)].symbol(), "|");
+    assert_eq!(ascii[(39, 5)].symbol(), "+");
+
+    assert_eq!(CELL_SPACING, [0, 1, 2, 3, 4, 6]);
+    assert_eq!(BLOCK_TITLE_INSET, 1);
+    assert_eq!(EIGHTH_BLOCKS[8], '█');
+    assert_eq!(ASCII_FILL, '#');
+    assert_eq!(SUBCELL_GLYPH_ORDER.len(), 5);
 }
 
 #[test]

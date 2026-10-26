@@ -128,3 +128,22 @@ approved release, run `python3 scripts/check-release.py --tag vX.Y.Z` against th
 prepared release commit. It must reject tags whose version differs from the
 workspace or whose changelog section is absent. These commands perform no
 release writes. The tag workflow repeats the check and workspace tests/docs.
+
+## Cell-space design tokens
+
+Run `cargo test --locked --features cell-design` and
+`cargo run --quiet --locked --example cell_design --features cell-design`.
+The example prints spacing `[0, 1, 2, 3, 4, 6]`, title inset `1`, rounded
+`╭╮╯╰─│`, plain `┌┐┘└─│`, and thick `┏┓┛┗━┃` borders. All three ASCII
+variants print `++++-|`. The glyph preference is octants, braille, half blocks,
+eighth blocks, ASCII. The eighth-block ramp ends at `█` and ASCII fill is `#`.
+Record the exact head and output from a clean local VM. These APIs require the
+default-off `cell-design` feature. Pixel layout constants remain independent.
+
+The ratatui consumer exposes the same tokens behind its `cell-design` feature.
+Run `cargo test --locked -p graphite-tui --features cell-design` to check
+`PaneChrome` thick/plain/ASCII borders, the title inset, and the renderer's
+allocation-free contract. For rendered proof, run
+`cargo run --locked -p graphite-tui --example preview --features cell-design`;
+the pane preview prints the selected border style and renders rounded, plain,
+thick, and ASCII variants.
