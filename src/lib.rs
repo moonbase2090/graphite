@@ -18,6 +18,8 @@ mod sidebar;
 mod state;
 mod tabs_bar;
 mod text;
+#[cfg(feature = "serde")]
+mod theme_file;
 mod tokens;
 mod translucency;
 
@@ -61,6 +63,8 @@ pub use tabs_bar::{
     TabText,
 };
 pub use text::{ellipsize, Face, TextMetrics};
+#[cfg(feature = "serde")]
+pub use theme_file::ThemeFileError;
 pub use tokens::{tokens, Rgb, ThemeVariant, Tokens, DARK, LIGHT};
 #[cfg(feature = "series")]
 pub use tokens::{SERIES_DARK, SERIES_LIGHT};

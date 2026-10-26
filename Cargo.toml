@@ -19,6 +19,9 @@ series = []
 # Interaction state styles (focus, selection, disabled, error) for chrome widgets.
 states = []
 
+# Read and write Tokens as TOML theme files (opt-in).
+serde = ["dep:toml"]
+
 # Precompute terminal fallback palettes at startup (opt-in).
 terminal-palette = []
 
@@ -30,5 +33,10 @@ required-features = ["terminal-palette"]
 name = "state_styles"
 required-features = ["states"]
 
+[[example]]
+name = "theme_toml"
+required-features = ["serde"]
+
 [dependencies]
 unicode-segmentation = "1.13.3"
+toml = { version = "1", optional = true, default-features = false, features = ["parse", "display", "serde"] }
