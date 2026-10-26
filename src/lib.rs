@@ -14,6 +14,8 @@ mod ring;
 mod scale;
 mod side_rail;
 mod sidebar;
+#[cfg(feature = "motion")]
+mod spring;
 #[cfg(feature = "states")]
 mod state;
 mod tabs_bar;
@@ -55,6 +57,10 @@ pub use sidebar::{
     sidebar_header_layout, sidebar_hit, sidebar_layout, sidebar_max_scroll, sidebar_rows_in_view,
     sidebar_toggle_rect, SidebarHeaderLayout, SidebarHit, SidebarLayout, SidebarRow,
     SIDEBAR_ACTIONS, SIDEBAR_ARRANGE,
+};
+#[cfg(feature = "motion")]
+pub use spring::{
+    FrameGovernor, FrameRate, Spring, SETTLE_CELLS, SPRING_DAMPING, SPRING_MASS, SPRING_STIFFNESS,
 };
 #[cfg(feature = "states")]
 pub use state::{state_style, ColorDepth, StateStyle, WidgetState};
