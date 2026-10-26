@@ -116,3 +116,15 @@ host palette and are excluded from nearest-color search; ANSI-16 uses semantic
 slots. Dark has 34 entries and light has 35 because its optional active-tab
 outline is present. Run the same commands from a clean local VM for behavior
 proof, and record the exact commit and output in the PR.
+
+## Release metadata checks
+
+Run `python3 -m unittest discover -s scripts/tests -p test_release.py` and
+`python3 scripts/check-release.py --dry-run`. The fixture tests must show five
+passes, including rejecting a mismatched tag, absent release notes, and mixed
+workspace versions. The repository dry-run must list workspace package versions
+and state that a release entry and signed tag are still required. Before an
+approved release, run `python3 scripts/check-release.py --tag vX.Y.Z` against the
+prepared release commit. It must reject tags whose version differs from the
+workspace or whose changelog section is absent. These commands perform no
+release writes. The tag workflow repeats the check and workspace tests/docs.

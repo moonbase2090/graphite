@@ -1,0 +1,50 @@
+name: Release check
+
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - '.github/workflows/release-check.yml'
+      - 'scripts/check-release.py'
+      - 'scripts/tests/test_release.py'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing or intended release tag to validate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  script-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: 1.85.0
+      - run: python3 -m unittest discover -s scripts/tests -p test_release.py
+  release-check:
+    if: github.event_name != 'pull_request'
+    needs: script-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: 1.85.0
+      - name: Validate release metadata
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: python3 scripts/check-release.py --tag "$RELEASE_TAG"
+      - name: Test all workspace features
+        run: cargo test --workspace --all-features --locked
+      - name: Check default-off build
+        run: cargo check --workspace --all-targets --no-default-features --locked
+      - name: Build documentation
+        run: cargo doc --workspace --all-features --no-deps --locked
+        env:
+          RUSTDOCFLAGS: -D warnings
