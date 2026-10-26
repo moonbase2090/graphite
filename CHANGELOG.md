@@ -14,3 +14,5 @@
 - Add the opt-in `states` feature: focus, selection, disabled, and error styles at truecolor, 256-color, and 16-color depth.
 - Add the opt-in `serde` feature: read and write `Tokens` as TOML theme files.
 - Add the opt-in `terminal-palette` feature: deterministic 256-color and ANSI-16 fallbacks for every token.
+- Add a widget gallery example for `graphite-tui`, rendering every chrome widget in dark and light themes at truecolor, 256-color, and 16-color depth.
+- Add the opt-in `motion` spring and frame-rate governor: a damped spring that settles within an eighth of a cell, bounded per-call work, reduced-motion snapping, and a 60-to-30 frames-per-second governor.
