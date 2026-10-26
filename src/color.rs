@@ -116,19 +116,45 @@ pub fn step_bar_color(bar: Option<BarColor>, forward: bool, theme_bars: bool) ->
     order[next]
 }
 
-/// Nudge a focus color until it has the 3:1 non-text contrast required by WCAG.
+/// The default focus accent, `#62A8FF`.
+///
+/// Pass it to [`accent`] to get the accent for a token set. It already clears
+/// 3:1 against the dark bar, so [`crate::DARK`] keeps it unchanged; on light
+/// bars [`accent`] darkens it.
+pub const DEFAULT_ACCENT: Rgb = [0x62, 0xa8, 0xff];
+
+/// Returns `focus` adjusted so it has the 3:1 non-text contrast (WCAG 1.4.11)
+/// against `tokens.bar`.
+///
+/// Contract:
+/// - A `focus` that already has 3:1 against the bar is returned unchanged.
+/// - Otherwise it is mixed, in steps of 24/256, toward black or white,
+///   whichever contrasts more with the bar, until it reaches 3:1. The text
+///   color plays no part. Hue is preserved only approximately; contrast is
+///   the guarantee, and it holds for every bar color (see the sweep test).
+/// - Only the bar is checked. Callers drawing on other surfaces must check
+///   those themselves.
+///
+/// The focus color usually comes from [`DEFAULT_ACCENT`] or a host theme's
+/// ANSI blue (`ansi[4]`). [`crate::derive_tokens`] uses that same `ansi[4]` as
+/// the base for the focused title row (10%), its outline (22%), and the pane
+/// hover outline (40%), each mixed over the pane background, so a theme's blue
+/// drives both the derived focus tints and the accent a host passes here.
 pub fn accent(tokens: &Tokens, focus: Rgb) -> Rgb {
     let mut color = focus;
-    let light_bar = relative_luminance(tokens.bar) > relative_luminance(tokens.text);
+    // Move toward whichever of black and white contrasts more with the bar, so
+    // the target is reachable for every bar color, whatever the text color is.
+    let pole =
+        if contrast_ratio([255, 255, 255], tokens.bar) >= contrast_ratio([0, 0, 0], tokens.bar) {
+            [255, 255, 255]
+        } else {
+            [0, 0, 0]
+        };
     for _ in 0..24 {
         if contrast_ratio(color, tokens.bar) >= 3.0 {
             break;
         }
-        color = if light_bar {
-            mix_rgb(color, [0, 0, 0], 24)
-        } else {
-            mix_rgb(color, [255, 255, 255], 24)
-        };
+        color = mix_rgb(color, pole, 24);
     }
     color
 }
@@ -137,9 +163,11 @@ pub fn accent(tokens: &Tokens, focus: Rgb) -> Rgb {
 mod tests {
     use super::{
         accent, bar_color_name, bar_fills, contrast_ratio, relative_luminance, step_bar_color,
-        BarColor,
+        BarColor, DEFAULT_ACCENT,
     };
     use crate::tokens::{ThemeVariant, DARK, LIGHT};
+
+    const PIN_LIGHT: [u8; 3] = [0x4f, 0x89, 0xd1];
 
     const fn rgb(hex: u32) -> [u8; 3] {
         [(hex >> 16) as u8, (hex >> 8) as u8, hex as u8]
@@ -222,6 +250,60 @@ mod tests {
         }
         assert_eq!(bar_color_name(Some(BarColor::Plum)), "Plum");
         assert_eq!(bar_color_name(None), "Theme");
+    }
+
+    #[test]
+    fn default_accent_is_the_documented_value() {
+        assert_eq!(DEFAULT_ACCENT, rgb(0x62a8ff));
+    }
+
+    #[test]
+    fn default_accent_is_kept_on_dark_and_darkened_on_light() {
+        assert_eq!(accent(&DARK, DEFAULT_ACCENT), DEFAULT_ACCENT);
+        let light = accent(&LIGHT, DEFAULT_ACCENT);
+        assert_ne!(light, DEFAULT_ACCENT);
+        assert!(contrast_ratio(light, LIGHT.bar) >= 3.0);
+        assert!(relative_luminance(light) < relative_luminance(DEFAULT_ACCENT));
+        assert_eq!(light, PIN_LIGHT);
+    }
+
+    #[test]
+    fn accent_reaches_three_to_one_on_every_bar_whatever_the_text() {
+        // A mid-gray bar with white text used to pick the unreachable pole.
+        let mut tokens = DARK;
+        tokens.bar = [200, 200, 200];
+        tokens.text = [255, 255, 255];
+        assert!(contrast_ratio(accent(&tokens, tokens.bar), tokens.bar) >= 3.0);
+
+        for text in [[0, 0, 0], [255, 255, 255]] {
+            tokens.text = text;
+            let mut bars: Vec<[u8; 3]> = (0..=255u8).map(|v| [v, v, v]).collect();
+            for r in (0..=255u8).step_by(51) {
+                for g in (0..=255u8).step_by(51) {
+                    for b in (0..=255u8).step_by(51) {
+                        bars.push([r, g, b]);
+                    }
+                }
+            }
+            for bar in bars {
+                tokens.bar = bar;
+                for focus in [bar, DEFAULT_ACCENT] {
+                    let got = accent(&tokens, focus);
+                    assert!(
+                        contrast_ratio(got, bar) >= 3.0,
+                        "bar {bar:?} focus {focus:?} -> {got:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn accent_is_idempotent() {
+        for tokens in [&DARK, &LIGHT] {
+            let once = accent(tokens, DEFAULT_ACCENT);
+            assert_eq!(accent(tokens, once), once);
+        }
     }
 
     #[test]
