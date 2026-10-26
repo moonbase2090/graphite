@@ -27,14 +27,30 @@ allowed_email='322824348+mb2090@users.noreply.github.com'
 
 add_patterns() {
   while IFS= read -r line; do
-    [ -n "$line" ] && patterns+=("$line")
+    if [ -n "$line" ]; then
+      patterns+=("$line")
+    fi
+  done
+  return 0
+}
+# Reject malformed expressions up front: grep exits 2 on an invalid pattern.
+validate_patterns() {
+  for p in "${patterns[@]}"; do
+    rc=0
+    grep -E -e "$p" /dev/null >/dev/null 2>&1 || rc=$?
+    if [ "$rc" -eq 2 ]; then
+      echo "release-text: invalid denylist expression (file or RELEASE_DENYLIST)" >&2
+      exit 2
+    fi
   done
 }
 denylist_file="${HOME:-}/.config/moonbase/release-denylist.txt"
 [ -f "$denylist_file" ] && add_patterns < "$denylist_file"
 [ -n "${RELEASE_DENYLIST:-}" ] && add_patterns <<< "$RELEASE_DENYLIST"
+validate_patterns
 
 scratch=$(mktemp -d)
+index=0
 trap 'rm -rf "$scratch"' EXIT
 
 targets=()
@@ -46,8 +62,11 @@ done < <(git ls-files)
 for a in "$@"; do
   [ -f "$a" ] || { echo "missing artifact: $a" >&2; exit 2; }
   # Binaries and archives: scan printable strings.
-  strings -a "$a" > "$scratch/$(basename "$a").strings"
-  targets+=("$scratch/$(basename "$a").strings")
+  # One scratch file per input, so inputs with the same basename never overwrite each other.
+  index=$((index + 1))
+  scan="$scratch/artifact-$index.strings"
+  strings -a "$a" > "$scan"
+  targets+=("$scan")
 done
 for v in RELEASE_TITLE RELEASE_BODY RELEASE_TAG_MESSAGE; do
   if [ -n "${!v:-}" ]; then
