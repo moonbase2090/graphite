@@ -46,7 +46,7 @@ pub fn terminal_palette(tokens: &Tokens) -> Vec<TerminalToken> {
     let strong = if light { Black } else { BrightWhite };
     let surface = if light { BrightWhite } else { Black };
     let hover = if light { White } else { BrightBlack };
-    let mut entries = Vec::with_capacity(35);
+    let mut entries = Vec::with_capacity(41);
     macro_rules! add {
         ($field:ident, $ansi:expr) => {
             entries.push(TerminalToken {
@@ -99,6 +99,25 @@ pub fn terminal_palette(tokens: &Tokens) -> Vec<TerminalToken> {
     add!(unseen_text, Yellow);
     add!(cycle_head, if light { Blue } else { BrightWhite });
     add!(panel, surface);
+    #[cfg(feature = "series")]
+    {
+        const SERIES: [(&str, Ansi16); 6] = [
+            ("series_1", Blue),
+            ("series_2", Green),
+            ("series_3", Yellow),
+            ("series_4", Magenta),
+            ("series_5", Red),
+            ("series_6", Cyan),
+        ];
+        for ((name, ansi16), rgb) in SERIES.into_iter().zip(tokens.series) {
+            entries.push(TerminalToken {
+                name,
+                rgb,
+                xterm256: xterm256(rgb),
+                ansi16,
+            });
+        }
+    }
     entries
 }
 
@@ -170,7 +189,10 @@ mod tests {
         let mut table =
             String::from("| Theme | Token | RGB | xterm-256 | ANSI-16 |\n|---|---|---|---|---|\n");
         for (theme, tokens) in [("Dark", DARK), ("Light", LIGHT)] {
-            for entry in terminal_palette(&tokens) {
+            for entry in terminal_palette(&tokens)
+                .into_iter()
+                .filter(|entry| !entry.name.starts_with("series_"))
+            {
                 let [r, g, b] = entry.rgb;
                 writeln!(
                     table,
@@ -210,11 +232,33 @@ mod tests {
 
     #[test]
     fn absent_outline_is_omitted() {
-        assert_eq!(terminal_palette(&DARK).len(), 34);
-        assert_eq!(terminal_palette(&LIGHT).len(), 35);
+        let base = |tokens: &Tokens| {
+            terminal_palette(tokens)
+                .iter()
+                .filter(|entry| !entry.name.starts_with("series_"))
+                .count()
+        };
+        assert_eq!(base(&DARK), 34);
+        assert_eq!(base(&LIGHT), 35);
         assert!(!terminal_palette(&DARK)
             .iter()
             .any(|entry| entry.name == "tab_active_line"));
         assert_eq!(terminal_palette(&LIGHT)[5].name, "tab_active_line");
+    }
+
+    #[cfg(feature = "series")]
+    #[test]
+    fn series_entries_follow_the_panel_in_order() {
+        for tokens in [DARK, LIGHT] {
+            let palette = terminal_palette(&tokens);
+            let tail = &palette[palette.len() - 6..];
+            for (i, entry) in tail.iter().enumerate() {
+                assert_eq!(entry.name, format!("series_{}", i + 1));
+                assert_eq!(entry.rgb, tokens.series[i]);
+                assert_eq!(entry.xterm256, xterm256(tokens.series[i]));
+            }
+            assert_eq!(tail[0].ansi16, Ansi16::Blue);
+            assert_eq!(tail[4].ansi16, Ansi16::Red);
+        }
     }
 }
