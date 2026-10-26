@@ -1,4 +1,4 @@
-//! Core types and algorithms shared by Graphite consumers.
+#![doc = include_str!("../README.md")]
 
 mod color;
 mod derive;
