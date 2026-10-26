@@ -19,12 +19,13 @@ fn rgb(c: [u8; 3]) -> Color {
 
 fn text_of(buf: &Buffer) -> String {
     let a = buf.area;
-    (a.y..a.bottom())
-        .map(|y| {
-            let row: String = (a.x..a.right()).map(|x| buf[(x, y)].symbol()).collect();
-            format!("{}\n", row.trim_end())
-        })
-        .collect()
+    let mut out = String::new();
+    for y in a.y..a.bottom() {
+        let row: String = (a.x..a.right()).map(|x| buf[(x, y)].symbol()).collect();
+        out.push_str(row.trim_end());
+        out.push('\n');
+    }
+    out
 }
 
 fn check(name: &str, buf: &Buffer) {
