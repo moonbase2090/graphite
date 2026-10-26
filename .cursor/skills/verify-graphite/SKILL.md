@@ -189,3 +189,15 @@ Expected output:
 Screenshot procedure for review: run the `all` command in a clean local
 virtual macOS machine, then capture the host's view of the terminal window.
 Record the exact commit, the command, and the image with the review.
+
+## Theme crossfade
+
+Run `cargo test --locked --features motion` and
+`cargo run --quiet --locked --example theme_crossfade --features motion`.
+The example checks exact endpoints, a 240ms duration, neutral midpoint
+`[99, 99, 99]` and red/blue midpoint `[140, 83, 162]`. The midpoint uses OKLab,
+with out-of-gamut channels clipped to sRGB. Optional outlines and the variant
+switch at halfway. Contrast is not guaranteed during a transition.
+Repeat from a clean local VM, recording the exact head and stdout. Rerun the
+terminal palette reference check with `--features terminal-palette` because
+both APIs share the color conversion.

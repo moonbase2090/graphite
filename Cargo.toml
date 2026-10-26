@@ -37,6 +37,10 @@ required-features = ["states"]
 name = "theme_toml"
 required-features = ["serde"]
 
+[[example]]
+name = "theme_crossfade"
+required-features = ["motion"]
+
 [dependencies]
 unicode-segmentation = "1.13.3"
 toml = { version = "1", optional = true, default-features = false, features = ["parse", "display", "serde"] }
