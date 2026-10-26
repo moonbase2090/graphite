@@ -1,6 +1,10 @@
 //! Core types and algorithms shared by Graphite consumers.
 
 mod color;
+#[cfg(any(feature = "motion", feature = "terminal-palette"))]
+mod color_space;
+#[cfg(feature = "motion")]
+mod crossfade;
 mod derive;
 mod geom;
 mod legend;
@@ -23,6 +27,8 @@ pub use color::{
     accent, bar_color_name, bar_fills, contrast_ratio, mix_rgb, relative_luminance, step_bar_color,
     BarColor,
 };
+#[cfg(feature = "motion")]
+pub use crossfade::{crossfade_tokens, THEME_CROSSFADE_DURATION};
 pub use derive::{bar_tokens, derive_tokens, theme_tokens, uses_brief, ThemeSource};
 pub use geom::Rect;
 pub use legend::{legend_keys, LegendChip, LegendPaint, LegendRun, LegendText};
