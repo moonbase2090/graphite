@@ -1,5 +1,7 @@
 //! Text measurement seams and renderer-independent truncation.
 
+use unicode_segmentation::UnicodeSegmentation;
+
 /// The face used by a Graphite text measurement implementation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Face {
@@ -18,6 +20,10 @@ pub trait TextMetrics {
 }
 
 /// Truncates `text` to `max_w`, appending a Unicode ellipsis when needed.
+///
+/// Extended grapheme clusters are atomic. A combining mark, flag, ZWJ
+/// sequence, or variation selector stays with its base, or the whole cluster
+/// is dropped.
 pub fn ellipsize<M: TextMetrics + ?Sized>(
     metrics: &M,
     face: Face,
@@ -31,9 +37,9 @@ pub fn ellipsize<M: TextMetrics + ?Sized>(
 
     let ellipsis_width = metrics.width(face, px, "…");
     let mut out = String::new();
-    for ch in text.chars() {
+    for cluster in text.graphemes(true) {
         let mut next = out.clone();
-        next.push(ch);
+        next.push_str(cluster);
         if metrics.width(face, px, &next) + ellipsis_width > max_w {
             break;
         }
@@ -81,6 +87,95 @@ mod tests {
         assert_eq!(
             ellipsize(&OneCell, Face::Regular, 12.0, "abcdef", 4.0),
             "abc…"
+        );
+    }
+
+    #[test]
+    fn flag_that_cannot_fit_with_the_ellipsis_is_dropped_whole() {
+        // Two regional indicators. A scalar walk returns "🇺…".
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "🇺🇸abcd", 2.0), "");
+    }
+
+    #[test]
+    fn flag_is_kept_whole_with_the_ellipsis() {
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "🇺🇸abcd", 3.0),
+            "🇺🇸…"
+        );
+    }
+
+    #[test]
+    fn flag_after_text_is_not_split() {
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "ab🇺🇸cd", 4.0),
+            "ab…"
+        );
+    }
+
+    #[test]
+    fn flag_that_fits_is_unchanged() {
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "🇺🇸ab", 4.0),
+            "🇺🇸ab"
+        );
+    }
+
+    #[test]
+    fn zwj_sequence_that_cannot_fit_with_the_ellipsis_is_dropped_whole() {
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "👨‍👩abcd", 3.0), "");
+    }
+
+    #[test]
+    fn zwj_sequence_is_kept_whole_with_the_ellipsis() {
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "👨‍👩abcd", 4.0),
+            "👨‍👩…"
+        );
+    }
+
+    #[test]
+    fn zwj_sequence_after_text_is_not_split() {
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "ab👨‍👩", 4.0), "ab…");
+    }
+
+    #[test]
+    fn zwj_sequence_with_variation_selectors_stays_whole() {
+        let couple = "👨\u{FE0F}\u{200D}👩\u{FE0F}xy";
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, couple, 4.0), "");
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, couple, 6.0),
+            "👨\u{FE0F}\u{200D}👩\u{FE0F}…"
+        );
+    }
+
+    #[test]
+    fn combining_mark_stays_with_its_base() {
+        // U+0301. A scalar walk at width 2 returns "a…".
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "a\u{301}bc", 2.0),
+            ""
+        );
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "a\u{301}bc", 3.0),
+            "a\u{301}…"
+        );
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "xa\u{301}bc", 3.0),
+            "x…"
+        );
+    }
+
+    #[test]
+    fn variation_selector_is_not_left_behind() {
+        // U+2764 U+FE0F. A scalar walk at width 2 returns "❤…".
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "❤️abcd", 2.0), "");
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "❤️abcd", 3.0),
+            "❤️…"
+        );
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "ab❤️cd", 4.0),
+            "ab…"
         );
     }
 }
