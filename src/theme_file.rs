@@ -171,6 +171,12 @@ impl Tokens {
                 Tokens {
                     $($name: get!($name),)*
                     tab_active_line,
+                    // Series colors are not part of the file format yet; use the variant's palette.
+                    #[cfg(feature = "series")]
+                    series: match variant {
+                        ThemeVariant::Dark => crate::SERIES_DARK,
+                        ThemeVariant::Light => crate::SERIES_LIGHT,
+                    },
                     variant,
                 }
             };
