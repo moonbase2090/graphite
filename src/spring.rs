@@ -13,6 +13,8 @@ pub const SETTLE_CELLS: f64 = 0.125;
 
 /// Integration step. Frame times are split into steps of this size so the result does not depend on the frame rate.
 const STEP: Duration = Duration::from_millis(1);
+/// Longest step integrated. A longer step (a stalled host or a pause) snaps the spring to its target instead, so the work per call is bounded.
+const MAX_INTEGRATED_STEP: Duration = Duration::from_secs(1);
 
 /// A damped spring that moves a value (in cells) toward a target.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -55,6 +57,12 @@ impl Spring {
     /// The caller reads any reduced-motion setting; this crate takes it as an input.
     pub fn step(&mut self, dt: Duration, reduced_motion: bool) -> f64 {
         if reduced_motion {
+            self.position = self.target;
+            self.velocity = 0.0;
+            return self.position;
+        }
+        if dt > MAX_INTEGRATED_STEP {
+            // After a stall the spring has long since settled, so snapping is the bounded, deterministic result.
             self.position = self.target;
             self.velocity = 0.0;
             return self.position;
@@ -210,6 +218,17 @@ mod tests {
             slow.step(Duration::from_millis(4), false);
         }
         assert!((fast.position() - slow.position()).abs() < 0.01);
+    }
+
+    #[test]
+    fn a_long_stall_is_bounded_and_snaps_to_the_target() {
+        let mut spring = Spring::new(0.0);
+        spring.set_target(10.0);
+        assert_eq!(spring.step(Duration::MAX, false), 10.0);
+        assert!(spring.settled());
+        let mut paused = Spring::new(0.0);
+        paused.set_target(10.0);
+        assert_eq!(paused.step(Duration::from_secs(2), false), 10.0);
     }
 
     #[test]
