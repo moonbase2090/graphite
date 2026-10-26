@@ -16,6 +16,8 @@ default = []
 motion = []
 # Categorical chart series colors in `Tokens` (opt-in; adds a public field).
 series = []
+# Interaction state styles (focus, selection, disabled, error) for chrome widgets.
+states = []
 
 # Precompute terminal fallback palettes at startup (opt-in).
 terminal-palette = []
@@ -23,6 +25,10 @@ terminal-palette = []
 [[example]]
 name = "terminal_palettes"
 required-features = ["terminal-palette"]
+
+[[example]]
+name = "state_styles"
+required-features = ["states"]
 
 [dependencies]
 unicode-segmentation = "1.13.3"
