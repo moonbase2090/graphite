@@ -71,6 +71,20 @@ fn drive_theme_tokens() {
     println!("light-variant {:?}", light.variant);
     println!("contrast-black-white {black_white:.4}");
     println!("contrast-text-ground {text_ground:.4}");
+    for (name, set) in [("dark", dark), ("light", light)] {
+        let worst = set
+            .series
+            .iter()
+            .flat_map(|c| [set.ground, set.bar, set.panel].map(|s| contrast_ratio(*c, s)))
+            .fold(f32::INFINITY, f32::min);
+        println!(
+            "series-{name}-1 {} {} {}",
+            set.series[0][0], set.series[0][1], set.series[0][2]
+        );
+        println!("series-{name}-count {}", set.series.len());
+        println!("series-{name}-min-contrast {worst:.4}");
+        assert!(worst >= 3.0);
+    }
     assert_eq!(dark.ground, [0x10, 0x12, 0x16]);
     assert_eq!(dark.variant, ThemeVariant::Dark);
     assert_eq!(light.text, [0x1f, 0x23, 0x29]);

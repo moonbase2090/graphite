@@ -47,7 +47,7 @@ pub fn terminal_palette(tokens: &Tokens) -> Vec<TerminalToken> {
     let strong = if light { Black } else { BrightWhite };
     let surface = if light { BrightWhite } else { Black };
     let hover = if light { White } else { BrightBlack };
-    let mut entries = Vec::with_capacity(35);
+    let mut entries = Vec::with_capacity(if cfg!(feature = "series") { 41 } else { 35 });
     macro_rules! add {
         ($field:ident, $ansi:expr) => {
             entries.push(TerminalToken {
@@ -100,6 +100,25 @@ pub fn terminal_palette(tokens: &Tokens) -> Vec<TerminalToken> {
     add!(unseen_text, Yellow);
     add!(cycle_head, if light { Blue } else { BrightWhite });
     add!(panel, surface);
+    #[cfg(feature = "series")]
+    for ((name, ansi16), rgb) in [
+        ("series-1", Blue),
+        ("series-2", Green),
+        ("series-3", Yellow),
+        ("series-4", Magenta),
+        ("series-5", Red),
+        ("series-6", Cyan),
+    ]
+    .into_iter()
+    .zip(tokens.series)
+    {
+        entries.push(TerminalToken {
+            name,
+            rgb,
+            xterm256: xterm256(rgb),
+            ansi16,
+        });
+    }
     entries
 }
 
@@ -151,7 +170,10 @@ mod tests {
         let mut table =
             String::from("| Theme | Token | RGB | xterm-256 | ANSI-16 |\n|---|---|---|---|---|\n");
         for (theme, tokens) in [("Dark", DARK), ("Light", LIGHT)] {
-            for entry in terminal_palette(&tokens) {
+            for entry in terminal_palette(&tokens)
+                .into_iter()
+                .filter(|entry| !entry.name.starts_with("series-"))
+            {
                 let [r, g, b] = entry.rgb;
                 writeln!(
                     table,
@@ -191,8 +213,13 @@ mod tests {
 
     #[test]
     fn absent_outline_is_omitted() {
-        assert_eq!(terminal_palette(&DARK).len(), 34);
-        assert_eq!(terminal_palette(&LIGHT).len(), 35);
+        let (dark_count, light_count) = if cfg!(feature = "series") {
+            (40, 41)
+        } else {
+            (34, 35)
+        };
+        assert_eq!(terminal_palette(&DARK).len(), dark_count);
+        assert_eq!(terminal_palette(&LIGHT).len(), light_count);
         assert!(!terminal_palette(&DARK)
             .iter()
             .any(|entry| entry.name == "tab_active_line"));

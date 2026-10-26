@@ -12,8 +12,8 @@ default = []
 # Light-cycle easing and progress helpers (opt-in for pinned consumers).
 motion = []
 
-# Precompute terminal fallback palettes at startup (opt-in).
 terminal-palette = []
+series = []
 
 [[example]]
 name = "terminal_palettes"

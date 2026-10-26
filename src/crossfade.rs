@@ -69,6 +69,8 @@ pub fn crossfade_tokens(from: &Tokens, to: &Tokens, progress: f32) -> Tokens {
             (Some(a), Some(b)) => Some(color(a, b)),
             _ => discrete.tab_active_line,
         },
+        #[cfg(feature = "series")]
+        series: std::array::from_fn(|i| color(from.series[i], to.series[i])),
         variant: discrete.variant,
     }
 }
@@ -86,6 +88,16 @@ fn lerp_color(a: Rgb, b: Rgb, t: f64) -> Rgb {
 mod tests {
     use super::*;
     use crate::{ThemeVariant, DARK, LIGHT};
+    #[cfg(feature = "series")]
+    #[test]
+    fn series_colors_follow_the_perceptual_crossfade() {
+        let mut from = DARK;
+        let mut to = LIGHT;
+        from.series = [[0, 0, 0]; 6];
+        to.series = [[255, 255, 255]; 6];
+        assert_eq!(crossfade_tokens(&from, &to, 0.5).series, [[99, 99, 99]; 6]);
+    }
+
     #[test]
     fn endpoints_and_out_of_range_inputs_are_exact() {
         assert_eq!(THEME_CROSSFADE_DURATION.as_millis(), 240);
