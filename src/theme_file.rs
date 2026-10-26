@@ -93,6 +93,7 @@ macro_rules! names {
 }
 
 const OPTIONAL: &str = "tab_active_line";
+const SERIES: &str = "series";
 
 fn hex(c: Rgb) -> String {
     format!("#{:02X}{:02X}{:02X}", c[0], c[1], c[2])
@@ -110,6 +111,30 @@ fn parse_hex(key: &str, value: &Value) -> Result<Rgb, ThemeFileError> {
     }
     let n = u32::from_str_radix(digits, 16).map_err(|_| bad())?;
     Ok([(n >> 16) as u8, (n >> 8) as u8, n as u8])
+}
+
+/// Reads the optional six-entry `series` array, or the variant's built-in palette when absent.
+#[cfg(feature = "series")]
+fn series_from(table: &Table, variant: ThemeVariant) -> Result<[Rgb; 6], ThemeFileError> {
+    let Some(value) = table.get(SERIES) else {
+        return Ok(match variant {
+            ThemeVariant::Dark => crate::SERIES_DARK,
+            ThemeVariant::Light => crate::SERIES_LIGHT,
+        });
+    };
+    let bad = || ThemeFileError::BadColor {
+        key: SERIES.to_owned(),
+        value: value.to_string(),
+    };
+    let items = value.as_array().ok_or_else(bad)?;
+    if items.len() != 6 {
+        return Err(bad());
+    }
+    let mut out = [[0u8; 3]; 6];
+    for (slot, item) in out.iter_mut().zip(items) {
+        *slot = parse_hex(SERIES, item)?;
+    }
+    Ok(out)
 }
 
 impl Tokens {
@@ -130,6 +155,11 @@ impl Tokens {
         if let Some(line) = self.tab_active_line {
             table.insert(OPTIONAL.into(), Value::String(hex(line)));
         }
+        #[cfg(feature = "series")]
+        table.insert(
+            SERIES.into(),
+            Value::Array(self.series.iter().map(|c| Value::String(hex(*c))).collect()),
+        );
         table.to_string()
     }
 
@@ -140,7 +170,11 @@ impl Tokens {
             .map_err(|e: toml::de::Error| ThemeFileError::Syntax(e.message().to_owned()))?;
         const KNOWN: &[&str] = required_colors!(names);
         for key in table.keys() {
-            if key != "variant" && key != OPTIONAL && !KNOWN.contains(&key.as_str()) {
+            if key != "variant"
+                && key != OPTIONAL
+                && !(cfg!(feature = "series") && key == SERIES)
+                && !KNOWN.contains(&key.as_str())
+            {
                 return Err(ThemeFileError::Unknown(key.clone()));
             }
         }
@@ -171,12 +205,8 @@ impl Tokens {
                 Tokens {
                     $($name: get!($name),)*
                     tab_active_line,
-                    // Series colors are not part of the file format yet; use the variant's palette.
                     #[cfg(feature = "series")]
-                    series: match variant {
-                        ThemeVariant::Dark => crate::SERIES_DARK,
-                        ThemeVariant::Light => crate::SERIES_LIGHT,
-                    },
+                    series: series_from(&table, variant)?,
                     variant,
                 }
             };
@@ -274,5 +304,36 @@ mod tests {
         for name in KNOWN {
             assert!(text.contains(&format!("{name} = ")), "{name}");
         }
+    }
+
+    #[cfg(feature = "series")]
+    #[test]
+    fn custom_series_colors_round_trip() {
+        let mut t = DARK;
+        t.series = [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+            [10, 11, 12],
+            [13, 14, 15],
+            [16, 17, 18],
+        ];
+        assert_eq!(Tokens::from_toml(&t.to_toml()).unwrap(), t);
+    }
+
+    #[cfg(feature = "series")]
+    #[test]
+    fn missing_series_uses_the_variant_palette_and_bad_series_is_rejected() {
+        let text = DARK
+            .to_toml()
+            .lines()
+            .filter(|l| !l.starts_with("series"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert_eq!(Tokens::from_toml(&text).unwrap().series, crate::SERIES_DARK);
+        let bad = DARK
+            .to_toml()
+            .replace("series = [", "series = [\"#12345\", ");
+        assert!(Tokens::from_toml(&bad).is_err());
     }
 }

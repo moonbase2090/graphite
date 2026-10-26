@@ -33,9 +33,6 @@ required-features = ["terminal-palette"]
 name = "state_styles"
 required-features = ["states"]
 
-[dependencies]
-unicode-segmentation = "1.13.3"
-
 [[example]]
 name = "theme_toml"
 required-features = ["serde"]
