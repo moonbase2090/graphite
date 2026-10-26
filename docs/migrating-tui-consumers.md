@@ -60,7 +60,11 @@ are named in `Tokens`; see the rustdoc.
 - A host theme you already have: fill a `ThemeSource` (chrome and default
   colors, the 16 ANSI colors, and the badge colors) and call `theme_tokens`. It
   returns the built-in tokens unchanged for the brief themes and derives the
-  rest, keeping text at 4.5:1 or better.
+  rest. Derivation assumes a coherent palette, where the chrome, field, and
+  active-tab fills are close enough that one ink can read on all of them. It
+  moves text toward black or white to reach 4.5:1, but no ink can reach 4.5:1
+  on every surface of an incoherent theme (for example black chrome, white
+  fields, and a mid-gray active tab). Check the pairs you actually draw.
 - A user theme file: enable `serde` and call `Tokens::from_toml`. Errors name
   the key and the bad value.
 
@@ -101,6 +105,6 @@ snap to the end state; Graphite does not read the environment.
 
 - No hex literals or raw `Color::Rgb` calls remain outside the one place that
   converts a token to your renderer's color type.
-- Text and background pairs keep 4.5:1; focus and outline edges keep 3:1.
+- Check the text and background pairs you actually draw for 4.5:1, and focus and outline edges for 3:1; derived tokens only guarantee this for coherent host palettes.
 - Switching theme does not rebuild widgets, only the resolved palette.
 - Rendering a frame with nothing changed performs no allocation.
