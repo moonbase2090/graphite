@@ -78,3 +78,20 @@ That reads `driver.pid` in the state directory, signals that process group, and 
 `doctor.sh`, `drive.sh`, and `cleanup.sh` are executable. Run them from any working directory; they locate the repository from their own path. `state.sh` is sourced and is not a command.
 
 Keep this skill honest with `/maintain-verification-skill` when a change alters how Graphite is built, measured, or proven.
+
+## Terminal palettes
+
+With the opt-in `terminal-palette` feature, run:
+
+```sh
+cargo test --locked --features terminal-palette
+cargo run --quiet --locked --example terminal_palettes --features terminal-palette > target/terminal-palettes.md
+diff -u docs/terminal-palettes.md target/terminal-palettes.md
+```
+
+The generated table must match the reviewed reference exactly. Spot-check fixed
+xterm endpoints with the palette unit tests. Slots 0 through 15 depend on the
+host palette and are excluded from nearest-color search; ANSI-16 uses semantic
+slots. Dark has 34 entries and light has 35 because its optional active-tab
+outline is present. Run the same commands from a clean local VM for behavior
+proof, and record the exact commit and output in the PR.

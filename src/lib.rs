@@ -6,6 +6,8 @@ mod geom;
 mod legend;
 #[cfg(feature = "motion")]
 mod motion;
+#[cfg(feature = "terminal-palette")]
+mod palette;
 mod pane;
 mod picker;
 mod ring;
@@ -26,6 +28,8 @@ pub use geom::Rect;
 pub use legend::{legend_keys, LegendChip, LegendPaint, LegendRun, LegendText};
 #[cfg(feature = "motion")]
 pub use motion::{light_cycle_traced_samples, MotionCurve};
+#[cfg(feature = "terminal-palette")]
+pub use palette::{terminal_palette, xterm256, Ansi16, TerminalToken};
 pub use pane::{activity_header_rects, pane_handle_rect, status_width, PaneStatus};
 pub use picker::{
     theme_picker_hit, theme_picker_layout, theme_picker_visible_rows, ThemePickerHit,
