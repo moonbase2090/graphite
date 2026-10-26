@@ -60,8 +60,8 @@ assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "graphite", 5.0), "grap…")
 
 For terminals, use `graphite-tui`: build a layout with `tabs_bar_layout`,
 `legend_layout`, or `picker_layout`, then render a widget such as `TabsBar`
-into a ratatui buffer. `cargo run -p graphite-tui --example preview` prints
-every widget as true-color ANSI.
+into a ratatui buffer. `cargo run -p graphite-tui --example gallery` prints
+every widget as ANSI text in dark, light, 256-color and 16-color modes.
 
 ## Contributing
 
