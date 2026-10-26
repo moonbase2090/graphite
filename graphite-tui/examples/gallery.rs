@@ -98,10 +98,11 @@ fn sentinel(t: &Tokens) -> (Tokens, Vec<Ansi16>) {
 
 /// Maps a drawn color to the SGR parameters for the chosen depth.
 fn sgr(c: Color, depth: Depth, fg: bool, roles: &[Ansi16]) -> Option<String> {
-    let Color::Rgb(r, g, b) = c else {
-        return None;
-    };
     let base = if fg { 38 } else { 48 };
+    let Color::Rgb(r, g, b) = c else {
+        // `Reset` means the terminal default. Emit it so an unstyled cell does not inherit the previous color.
+        return (c == Color::Reset).then(|| format!("{}", if fg { 39 } else { 49 }));
+    };
     Some(match depth {
         Depth::TrueColor => format!("{base};2;{r};{g};{b}"),
         Depth::Ansi256 => format!("{base};5;{}", xterm256([r, g, b])),
@@ -276,6 +277,19 @@ mod tests {
         assert_eq!(
             sgr(rgb(drawn.tab_hover), Depth::Ansi16, false, &roles).unwrap(),
             "100"
+        );
+    }
+
+    #[test]
+    fn reset_emits_the_default_colors_so_cells_do_not_inherit() {
+        let (_, roles) = sentinel(&DARK);
+        assert_eq!(
+            sgr(Color::Reset, Depth::TrueColor, false, &roles).unwrap(),
+            "49"
+        );
+        assert_eq!(
+            sgr(Color::Reset, Depth::Ansi16, true, &roles).unwrap(),
+            "39"
         );
     }
 
