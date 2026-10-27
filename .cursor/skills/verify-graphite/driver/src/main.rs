@@ -52,6 +52,19 @@ fn drive_ellipsize() {
     println!("cut input={cut_input} budget={cut_budget:.0} result={cut}");
     assert_eq!(unchanged, "short");
     assert_eq!(cut, "abc…");
+    for (kind, input, budget, expected) in [
+        ("flag-narrow", "🇺🇸abcd", 2.0, "…"),
+        ("flag-fit", "🇺🇸abcd", 3.0, "🇺🇸…"),
+        ("family-narrow", "👨‍👩‍👧‍👦abcd", 2.0, "…"),
+        ("family-fit", "👨‍👩‍👧‍👦abcd", 8.0, "👨‍👩‍👧‍👦…"),
+        ("accent-narrow", "a\u{301}bc", 2.0, "…"),
+        ("accent-fit", "a\u{301}bc", 3.0, "a\u{301}…"),
+        ("no-space", "🇺🇸abcd", 0.0, ""),
+    ] {
+        let result = ellipsize(&metrics, Face::Regular, 12.0, input, budget);
+        println!("grapheme kind={kind} input={input} budget={budget:.0} result={result}");
+        assert_eq!(result, expected, "{kind}");
+    }
 }
 
 fn drive_theme_tokens() {
