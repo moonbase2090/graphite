@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-- No changes since 0.1.1.
+- No changes since 0.1.2.
+
+## [0.1.2] - 2026-10-28
+
+- Add the opt-in `pixel-buffer` feature: CPU RGBA pixel-buffer primitives (#57).
 
 ## [0.1.1] - 2026-10-27
 
