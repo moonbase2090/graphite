@@ -40,6 +40,10 @@ name = "theme_toml"
 required-features = ["serde"]
 
 [[example]]
+name = "motion_tokens"
+required-features = ["motion"]
+
+[[example]]
 name = "pixel_buffer"
 required-features = ["pixel-buffer"]
 
