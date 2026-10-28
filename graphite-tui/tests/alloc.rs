@@ -11,17 +11,23 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::widgets::Widget;
 use std::alloc::{GlobalAlloc, Layout, System};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 struct Counting;
-static ACTIVE: AtomicBool = AtomicBool::new(false);
-static ALLOCS: AtomicUsize = AtomicUsize::new(0);
+
+// Counts per thread: the harness and other threads may allocate while the
+// measured closure runs, and those allocations must not be attributed to it.
+thread_local! {
+    static COUNTING: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    static COUNT: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
 
 unsafe impl GlobalAlloc for Counting {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        if ACTIVE.load(Ordering::Relaxed) {
-            ALLOCS.fetch_add(1, Ordering::Relaxed);
-        }
+        let _ = COUNTING.try_with(|on| {
+            if on.get() {
+                let _ = COUNT.try_with(|n| n.set(n.get() + 1));
+            }
+        });
         unsafe { System.alloc(layout) }
     }
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
@@ -32,13 +38,13 @@ unsafe impl GlobalAlloc for Counting {
 #[global_allocator]
 static ALLOCATOR: Counting = Counting;
 
-/// Counts allocations made by `f` only.
+/// Counts allocations made by `f` on the calling thread only.
 fn allocations(f: impl FnOnce()) -> usize {
-    ALLOCS.store(0, Ordering::Relaxed);
-    ACTIVE.store(true, Ordering::Relaxed);
+    COUNT.with(|n| n.set(0));
+    COUNTING.with(|on| on.set(true));
     f();
-    ACTIVE.store(false, Ordering::Relaxed);
-    ALLOCS.load(Ordering::Relaxed)
+    COUNTING.with(|on| on.set(false));
+    COUNT.with(|n| n.get())
 }
 
 #[test]
