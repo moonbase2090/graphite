@@ -1,6 +1,6 @@
 #!/bin/sh
 # Drive one Graphite feature through the public library API.
-# usage: drive.sh <ellipsize|theme-tokens|pane-status|legend-keys|tabs-bar>
+# usage: drive.sh <ellipsize|theme-tokens|pane-status|legend-keys|tabs-bar|pixel-buffer>
 set -eu
 set -m
 feature=${1:?usage: drive.sh <feature>}
@@ -9,7 +9,7 @@ cd "$root"
 script_dir=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 . "$script_dir/state.sh"
 case "$feature" in
-  ellipsize|theme-tokens|pane-status|legend-keys|tabs-bar) ;;
+  ellipsize|theme-tokens|pane-status|legend-keys|tabs-bar|pixel-buffer) ;;
   *)
     printf 'drive: unknown feature %s\n' "$feature" >&2
     exit 2
