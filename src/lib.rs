@@ -1,5 +1,7 @@
 #![doc = include_str!("../README.md")]
 
+#[cfg(feature = "cell-design")]
+mod cell_design;
 mod color;
 #[cfg(any(feature = "motion", feature = "terminal-palette"))]
 mod color_space;
@@ -31,6 +33,11 @@ mod theme_file;
 mod tokens;
 mod translucency;
 
+#[cfg(feature = "cell-design")]
+pub use cell_design::{
+    BorderGlyphs, BorderStyle, SubcellGlyphs, ASCII_FILL, BLOCK_TITLE_INSET, CELL_SPACING,
+    EIGHTH_BLOCKS, SUBCELL_GLYPH_ORDER,
+};
 pub use color::{
     accent, bar_color_name, bar_fills, contrast_ratio, mix_rgb, relative_luminance, step_bar_color,
     BarColor, DEFAULT_ACCENT,
