@@ -14,6 +14,8 @@ repository = "https://github.com/moonbase2090/graphite"
 default = []
 # Light-cycle easing and progress helpers (opt-in for pinned consumers).
 motion = []
+# Cell-space spacing, border glyphs and sub-cell glyph order (opt-in).
+cell-design = []
 # CPU RGBA pixel-buffer primitives (opt-in for pinned consumers).
 pixel-buffer = []
 # Categorical chart series colors in `Tokens` (opt-in; adds a public field).
