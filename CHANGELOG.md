@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-- No changes since 0.1.2.
+- No changes since 0.1.3.
+
+## [0.1.3] - 2026-10-28
+
+- Add motion duration tokens and CSS easing curves to the opt-in `motion` feature.
 
 ## [0.1.2] - 2026-10-28
 
