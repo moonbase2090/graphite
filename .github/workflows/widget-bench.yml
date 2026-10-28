@@ -1,0 +1,41 @@
+name: Widget benchmarks
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'graphite-tui/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'scripts/bench-widgets.py'
+      - '.github/workflows/widget-bench.yml'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  chrome:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: 1.85.0
+      - name: Check benchmark output before timing
+        run: cargo bench --locked -p graphite-tui --bench chrome -- --test
+      - name: Compare five alternating rounds
+        run: python3 scripts/bench-widgets.py
+      - name: Reject intentional extra rendering
+        run: |
+          python3 - <<'PYTHON'
+          import csv
+          import subprocess
+          result = subprocess.run(["python3", "scripts/bench-widgets.py", "--group", "frame", "--negative-control", "--out", "target/widget-negative"])
+          assert result.returncode == 1, result.returncode
+          with open("target/widget-negative/summary.tsv") as stream:
+              rows = list(csv.DictReader(stream, delimiter="\t"))
+          assert len(rows) == 1 and rows[0]["verdict"] == "FAIL", rows
+          PYTHON
