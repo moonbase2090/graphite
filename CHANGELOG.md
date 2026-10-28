@@ -4,6 +4,11 @@
 
 - Add the opt-in `cell-design` feature: cell spacing scale, block-title inset, Rounded, Plain and Thick border glyphs with an ASCII fallback, and sub-cell glyph preference order. Off by default.
 
+## [0.1.4] - 2026-10-28
+
+- Adjust derived text and accent colors so host-theme tokens meet the readability floors more reliably. Derived token values can change for some host themes.
+- Add `crossfade_tokens` and `THEME_CROSSFADE_DURATION` behind the opt-in `motion` feature: an OKLab interpolation between two token sets.
+
 ## [0.1.3] - 2026-10-28
 
 - Add motion duration tokens and CSS easing curves to the opt-in `motion` feature.

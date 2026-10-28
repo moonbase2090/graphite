@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 661a3665bc4eec06ab197b48027ef85a82b93e5c6fe58e54eb292180980ed65d # shrinks to source = ThemeSource { id: "generated-host", variant: Dark, chrome_bg: [0, 0, 0], chrome_fg: [190, 190, 190], default_bg: [0, 0, 0], default_fg: [190, 190, 190], tab_active_bg: [0, 0, 0], pane_backdrop: [0, 0, 0], pane_border: [0, 0, 0], active_badge: [0, 0, 0], unseen_badge: [0, 0, 0], attention_badge: [221, 51, 81], ansi: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]] }
