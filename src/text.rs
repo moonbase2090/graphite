@@ -23,7 +23,8 @@ pub trait TextMetrics {
 ///
 /// Extended grapheme clusters are atomic. A combining mark, flag, ZWJ
 /// sequence, or variation selector stays with its base, or the whole cluster
-/// is dropped.
+/// is dropped. If only the ellipsis fits, it is returned on its own. If even
+/// the ellipsis does not fit, the result is empty.
 pub fn ellipsize<M: TextMetrics + ?Sized>(
     metrics: &M,
     face: Face,
@@ -47,7 +48,7 @@ pub fn ellipsize<M: TextMetrics + ?Sized>(
     }
 
     let trimmed = out.trim_end();
-    if trimmed.is_empty() {
+    if trimmed.is_empty() && ellipsis_width > max_w {
         String::new()
     } else {
         format!("{trimmed}…")
@@ -64,6 +65,21 @@ mod tests {
         fn width(&self, _face: Face, _px: f32, text: &str) -> f32 {
             text.chars().count() as f32
         }
+    }
+
+    #[test]
+    fn full_family_stays_atomic_and_narrow_budget_still_marks_truncation() {
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "👨‍👩‍👧‍👦abcd", 2.0), "…");
+        assert_eq!(
+            ellipsize(&OneCell, Face::Regular, 12.0, "👨‍👩‍👧‍👦abcd", 8.0),
+            "👨‍👩‍👧‍👦…"
+        );
+    }
+
+    #[test]
+    fn budget_smaller_than_the_ellipsis_stays_empty() {
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "🇺🇸abcd", 0.5), "");
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "abcdef", 0.0), "");
     }
 
     #[test]
@@ -93,7 +109,7 @@ mod tests {
     #[test]
     fn flag_that_cannot_fit_with_the_ellipsis_is_dropped_whole() {
         // Two regional indicators. A scalar walk returns "🇺…".
-        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "🇺🇸abcd", 2.0), "");
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "🇺🇸abcd", 2.0), "…");
     }
 
     #[test]
@@ -122,7 +138,7 @@ mod tests {
 
     #[test]
     fn zwj_sequence_that_cannot_fit_with_the_ellipsis_is_dropped_whole() {
-        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "👨‍👩abcd", 3.0), "");
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "👨‍👩abcd", 3.0), "…");
     }
 
     #[test]
@@ -141,7 +157,7 @@ mod tests {
     #[test]
     fn zwj_sequence_with_variation_selectors_stays_whole() {
         let couple = "👨\u{FE0F}\u{200D}👩\u{FE0F}xy";
-        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, couple, 4.0), "");
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, couple, 4.0), "…");
         assert_eq!(
             ellipsize(&OneCell, Face::Regular, 12.0, couple, 6.0),
             "👨\u{FE0F}\u{200D}👩\u{FE0F}…"
@@ -153,7 +169,7 @@ mod tests {
         // U+0301. A scalar walk at width 2 returns "a…".
         assert_eq!(
             ellipsize(&OneCell, Face::Regular, 12.0, "a\u{301}bc", 2.0),
-            ""
+            "…"
         );
         assert_eq!(
             ellipsize(&OneCell, Face::Regular, 12.0, "a\u{301}bc", 3.0),
@@ -168,7 +184,7 @@ mod tests {
     #[test]
     fn variation_selector_is_not_left_behind() {
         // U+2764 U+FE0F. A scalar walk at width 2 returns "❤…".
-        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "❤️abcd", 2.0), "");
+        assert_eq!(ellipsize(&OneCell, Face::Regular, 12.0, "❤️abcd", 2.0), "…");
         assert_eq!(
             ellipsize(&OneCell, Face::Regular, 12.0, "❤️abcd", 3.0),
             "❤️…"

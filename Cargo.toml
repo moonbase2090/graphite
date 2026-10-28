@@ -3,7 +3,7 @@ members = [".", "graphite-tui"]
 
 [package]
 name = "graphite-core"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.85"
 license = "MIT"
@@ -14,6 +14,8 @@ repository = "https://github.com/moonbase2090/graphite"
 default = []
 # Light-cycle easing and progress helpers (opt-in for pinned consumers).
 motion = []
+# CPU RGBA pixel-buffer primitives (opt-in for pinned consumers).
+pixel-buffer = []
 # Categorical chart series colors in `Tokens` (opt-in; adds a public field).
 series = []
 # Interaction state styles (focus, selection, disabled, error) for chrome widgets.
@@ -40,6 +42,10 @@ required-features = ["serde"]
 [[example]]
 name = "motion_tokens"
 required-features = ["motion"]
+
+[[example]]
+name = "pixel_buffer"
+required-features = ["pixel-buffer"]
 
 [dependencies]
 unicode-segmentation = "1.13.3"

@@ -10,6 +10,8 @@ mod motion;
 mod palette;
 mod pane;
 mod picker;
+#[cfg(feature = "pixel-buffer")]
+mod raster;
 mod ring;
 mod scale;
 mod side_rail;
@@ -44,6 +46,8 @@ pub use picker::{
     theme_picker_hit, theme_picker_layout, theme_picker_visible_rows, ThemePickerHit,
     ThemePickerLayout,
 };
+#[cfg(feature = "pixel-buffer")]
+pub use raster::{FramebufferError, PixelBuffer, Rgba};
 pub use ring::RingSweep;
 pub use scale::{
     scale_px, side_chip_px, side_cols_for_px, side_footer_px, side_gap_px, side_header_px,
