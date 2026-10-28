@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- No changes since 0.1.3.
+- Add the opt-in `cell-design` feature: cell spacing scale, block-title inset, Rounded, Plain and Thick border glyphs with an ASCII fallback, and sub-cell glyph preference order. Off by default.
 
 ## [0.1.3] - 2026-10-28
 
