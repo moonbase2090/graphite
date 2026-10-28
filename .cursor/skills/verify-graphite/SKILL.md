@@ -202,6 +202,25 @@ Repeat from a clean local VM, recording the exact head and stdout. Rerun the
 terminal palette reference check with `--features terminal-palette` because
 both APIs share the color conversion.
 
+## Host-theme contrast properties
+
+Run `cargo test --locked --test theme_properties` and
+`cargo run --quiet --locked --example theme_contrast`. The focused regression
+must pass, and the example must show attention `[221, 51, 81]` with contrast
+at least 4.5. Before the fix, its ink `[19, 19, 19]` had contrast 4.129008.
+The property test samples 512 coherent host themes: background channels are
+0..60 for dark or 190..255 for light, text has the opposite polarity, and badge
+and ANSI colors span the full byte range. It checks every documented text
+surface and the accent floor. Existing CI runs this integration test through
+`cargo test`.
+
+Do not describe this as a guarantee for independently arbitrary surfaces. A
+shared ink cannot meet 4.5 on black, white and mid-gray simultaneously. The
+solver preserves best-effort behavior for incompatible backgrounds; the
+property generator states its admissible domain instead of discarding failures.
+Repeat the public example and property tests from a clean local VM and retain
+the exact head and output as behavior proof.
+
 ## Motion timing and curves
 
 Run `cargo test --locked --features motion` and

@@ -155,6 +155,21 @@ fn readable(ink: Rgb, grounds: &[Rgb], target: f32) -> Rgb {
         }
         color = crate::mix_rgb(color, pole, 24);
     }
+    // Preserve the established steps when they reach the floor. If their
+    // iteration limit stops short, find a qualifying mix with the same pole.
+    // Conflicting host surfaces may have no common qualifying ink.
+    if worst(color) < target && worst(pole) >= target {
+        let (mut low, mut high) = (0, 256);
+        while low < high {
+            let weight = (low + high) / 2;
+            if worst(crate::mix_rgb(color, pole, weight)) >= target {
+                high = weight;
+            } else {
+                low = weight + 1;
+            }
+        }
+        return crate::mix_rgb(color, pole, high);
+    }
     color
 }
 
