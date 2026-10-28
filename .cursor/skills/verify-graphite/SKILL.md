@@ -201,3 +201,14 @@ switch at halfway. Contrast is not guaranteed during a transition.
 Repeat from a clean local VM, recording the exact head and stdout. Rerun the
 terminal palette reference check with `--features terminal-palette` because
 both APIs share the color conversion.
+
+## Motion timing and curves
+
+Run `cargo test --locked --features motion` and
+`cargo run --quiet --locked --example motion_tokens --features motion`.
+The example must print durations `80ms/160ms/240ms` and a `300ms` cap.
+Ease-out at time 0.1 is 0.15625, and at time 0.2 is 0.5. Ease-in at time
+0.325 is 0.15625, and at time 0.65 is 0.5. These are analytic points on the
+specified CSS cubic-bezier curves, with time obtained from the x coordinate.
+Run those commands from a clean local VM and record the exact commit and
+stdout. The motion feature stays disabled by default.
