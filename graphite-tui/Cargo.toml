@@ -15,3 +15,8 @@ unicode-width = "0.2"
 
 [dev-dependencies]
 graphite-core = { path = "..", features = ["terminal-palette"] }
+criterion = { version = "=0.5.1", default-features = false }
+
+[[bench]]
+name = "chrome"
+harness = false
