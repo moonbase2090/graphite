@@ -1,6 +1,6 @@
 ---
 name: verify-graphite
-description: "Drive graphite-core, the Graphite layout and color library, through its public Rust API and capture stdout proof. Use when proving ellipsize, theme tokens, pane status, legend packing, or tabs-bar layout."
+description: "Drive graphite-core, the Graphite layout, color, and pixel-buffer library, through its public Rust API and capture stdout proof. Use when proving ellipsize, theme tokens, pane status, legend packing, tabs-bar layout, or CPU framebuffer drawing."
 ---
 
 # Verify Graphite
@@ -16,7 +16,7 @@ From the repository root:
 .cursor/skills/verify-graphite/scripts/drive.sh <feature>
 ```
 
-`<feature>` is `ellipsize`, `theme-tokens`, `pane-status`, `legend-keys`, or `tabs-bar`.
+`<feature>` is `ellipsize`, `theme-tokens`, `pane-status`, `legend-keys`, `tabs-bar`, or `pixel-buffer`.
 
 Ready means `drive.sh` exits 0 and writes the evidence file. There is no port and no ready log line. The first run compiles the library; later runs reuse the cargo target directory.
 
@@ -33,7 +33,7 @@ feature configuration with Rust 1.85.0:
 
 ```sh
 cargo fmt --all -- --check
-for feature_args in '' '--features motion' '--no-default-features'; do
+for feature_args in '' '--features motion' '--features pixel-buffer' '--no-default-features'; do
     cargo clippy --workspace --locked --all-targets $feature_args -- -D warnings
     cargo test --workspace --locked $feature_args
     RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked $feature_args
