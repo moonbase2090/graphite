@@ -10,6 +10,8 @@ mod motion;
 mod palette;
 mod pane;
 mod picker;
+#[cfg(feature = "pixel-buffer")]
+mod raster;
 mod ring;
 mod scale;
 mod side_rail;
@@ -33,7 +35,10 @@ pub use derive::{bar_tokens, derive_tokens, theme_tokens, uses_brief, ThemeSourc
 pub use geom::Rect;
 pub use legend::{legend_keys, LegendChip, LegendPaint, LegendRun, LegendText};
 #[cfg(feature = "motion")]
-pub use motion::{light_cycle_traced_samples, MotionCurve};
+pub use motion::{
+    capped_motion_duration, light_cycle_traced_samples, MotionCurve, MOTION_EMPHASIS, MOTION_MAX,
+    MOTION_MICRO, MOTION_STANDARD,
+};
 #[cfg(feature = "terminal-palette")]
 pub use palette::{terminal_palette, xterm256, Ansi16, TerminalToken};
 pub use pane::{activity_header_rects, pane_handle_rect, status_width, PaneStatus};
@@ -41,6 +46,8 @@ pub use picker::{
     theme_picker_hit, theme_picker_layout, theme_picker_visible_rows, ThemePickerHit,
     ThemePickerLayout,
 };
+#[cfg(feature = "pixel-buffer")]
+pub use raster::{FramebufferError, PixelBuffer, Rgba};
 pub use ring::RingSweep;
 pub use scale::{
     scale_px, side_chip_px, side_cols_for_px, side_footer_px, side_gap_px, side_header_px,

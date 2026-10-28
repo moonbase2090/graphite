@@ -1,6 +1,6 @@
 use graphite_core::{
     bar_hit, bar_layout, contrast_ratio, ellipsize, legend_keys, status_width, tokens, BarHit, Dot,
-    Face, LegendRun, PaneStatus, Rect, TabText, TextMetrics, ThemeVariant,
+    Face, LegendRun, PaneStatus, PixelBuffer, Rect, Rgba, TabText, TextMetrics, ThemeVariant,
 };
 
 struct CharCount;
@@ -22,7 +22,7 @@ impl TextMetrics for CharTimesPx {
 fn main() {
     let feature = std::env::args().nth(1).unwrap_or_else(|| {
         eprintln!(
-            "usage: verify-graphite <ellipsize|theme-tokens|pane-status|legend-keys|tabs-bar>"
+            "usage: verify-graphite <ellipsize|theme-tokens|pane-status|legend-keys|tabs-bar|pixel-buffer>"
         );
         std::process::exit(2);
     });
@@ -32,11 +32,45 @@ fn main() {
         "pane-status" => drive_pane_status(),
         "legend-keys" => drive_legend_keys(),
         "tabs-bar" => drive_tabs_bar(),
+        "pixel-buffer" => drive_pixel_buffer(),
         other => {
             eprintln!("unknown feature {other}");
             std::process::exit(2);
         }
     }
+}
+
+fn drive_pixel_buffer() {
+    let mut frame = PixelBuffer::new(3, 3, Rgba::new(0, 0, 0, 0)).expect("small framebuffer");
+    frame.fill_rect(Rect::new(0, 0, 3, 3), Rgba::new(0, 0, 255, 255));
+    frame.fill_rect(Rect::new(1, 0, 2, 1), Rgba::new(255, 0, 0, 128));
+    let blended = frame.pixel(1, 0).expect("pixel inside frame");
+    frame.stroke_rect(Rect::new(0, 0, 3, 3), 1, Rgba::new(0, 255, 0, 255));
+    let outline = frame.pixel(1, 0).expect("pixel inside frame");
+    let center = frame.pixel(1, 1).expect("pixel inside frame");
+    frame.fill_rect(
+        Rect::new(2, 2, usize::MAX, usize::MAX),
+        Rgba::new(255, 255, 0, 255),
+    );
+    let clipped = frame.pixel(2, 2).expect("pixel inside frame");
+    println!("feature pixel-buffer");
+    println!("dimensions {}x{}", frame.width(), frame.height());
+    println!("blend {blended:?}");
+    println!("top-center {outline:?}");
+    println!("bottom-center {center:?}");
+    println!("clipped-bottom-right {clipped:?}");
+    println!("rgba-bytes {:?}", frame.as_rgba());
+    assert_eq!(blended, Rgba::new(128, 0, 127, 255));
+    assert_eq!(outline, Rgba::new(0, 255, 0, 255));
+    assert_eq!(center, Rgba::new(0, 0, 255, 255));
+    assert_eq!(clipped, Rgba::new(255, 255, 0, 255));
+    assert_eq!(
+        frame.as_rgba(),
+        &[
+            0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 0, 255,
+            0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 255, 255, 0, 255,
+        ]
+    );
 }
 
 fn drive_ellipsize() {
@@ -52,6 +86,19 @@ fn drive_ellipsize() {
     println!("cut input={cut_input} budget={cut_budget:.0} result={cut}");
     assert_eq!(unchanged, "short");
     assert_eq!(cut, "abc…");
+    for (kind, input, budget, expected) in [
+        ("flag-narrow", "🇺🇸abcd", 2.0, "…"),
+        ("flag-fit", "🇺🇸abcd", 3.0, "🇺🇸…"),
+        ("family-narrow", "👨‍👩‍👧‍👦abcd", 2.0, "…"),
+        ("family-fit", "👨‍👩‍👧‍👦abcd", 8.0, "👨‍👩‍👧‍👦…"),
+        ("accent-narrow", "a\u{301}bc", 2.0, "…"),
+        ("accent-fit", "a\u{301}bc", 3.0, "a\u{301}…"),
+        ("no-space", "🇺🇸abcd", 0.0, ""),
+    ] {
+        let result = ellipsize(&metrics, Face::Regular, 12.0, input, budget);
+        println!("grapheme kind={kind} input={input} budget={budget:.0} result={result}");
+        assert_eq!(result, expected, "{kind}");
+    }
 }
 
 fn drive_theme_tokens() {

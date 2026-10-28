@@ -2,7 +2,20 @@
 
 ## [Unreleased]
 
-- No changes since 0.1.0.
+- No changes since 0.1.3.
+
+## [0.1.3] - 2026-10-28
+
+- Add motion duration tokens and CSS easing curves to the opt-in `motion` feature.
+
+## [0.1.2] - 2026-10-28
+
+- Add the opt-in `pixel-buffer` feature: CPU RGBA pixel-buffer primitives (#57).
+
+## [0.1.1] - 2026-10-27
+
+- Fix `ellipsize` so a narrow budget returns a lone ellipsis when it fits, and an empty string when even the ellipsis does not fit. Grapheme clusters stay whole.
+- Document the opt-in features in the README feature table: `series`, `states`, `serde`, and `terminal-palette`.
 
 ## [0.1.0] - 2026-10-26
 

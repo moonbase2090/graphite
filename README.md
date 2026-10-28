@@ -29,6 +29,10 @@ focus color until it has 3:1 contrast against the bar.
 | Flag | Default | Adds |
 | --- | --- | --- |
 | `motion` | off | Light-cycle easing and progress helpers (`MotionCurve`, `light_cycle_traced_samples`). |
+| `series` | off | `Tokens::series`: six categorical chart colors per palette, plus `SERIES_DARK` and `SERIES_LIGHT`. |
+| `states` | off | `state_style`: focus, selection, disabled, error, and hover styles at truecolor, 256-color, and 16-color depth. |
+| `serde` | off | `Tokens::to_toml` and `Tokens::from_toml` for TOML theme files; adds the `toml` dependency. |
+| `terminal-palette` | off | `terminal_palette` and `xterm256`: deterministic 256-color and ANSI-16 fallbacks for every token. |
 
 ## Quick start
 

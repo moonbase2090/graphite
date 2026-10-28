@@ -38,3 +38,4 @@ Each feature file starts with an H1 and one paragraph, then exactly four H2 sect
 - [Pane status](./pane-status.md) chooses a pane-header status and measures its label.
 - [Legend keys](./legend-keys.md) places a legend run that fits and drops one that does not.
 - [Tabs bar](./tabs-bar.md) lays out the tabs bar and hit-tests the space menu and the first tab.
+- [Pixel buffer](./pixel-buffer.md) draws and clips RGBA rectangles, blends alpha, and exposes row-major frame bytes.

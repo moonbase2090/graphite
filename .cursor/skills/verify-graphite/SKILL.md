@@ -1,6 +1,6 @@
 ---
 name: verify-graphite
-description: "Drive graphite-core, the Graphite layout and color library, through its public Rust API and capture stdout proof. Use when proving ellipsize, theme tokens, pane status, legend packing, or tabs-bar layout."
+description: "Drive graphite-core, the Graphite layout, color, and pixel-buffer library, through its public Rust API and capture stdout proof. Use when proving ellipsize, theme tokens, pane status, legend packing, tabs-bar layout, or CPU framebuffer drawing."
 ---
 
 # Verify Graphite
@@ -16,7 +16,7 @@ From the repository root:
 .cursor/skills/verify-graphite/scripts/drive.sh <feature>
 ```
 
-`<feature>` is `ellipsize`, `theme-tokens`, `pane-status`, `legend-keys`, or `tabs-bar`.
+`<feature>` is `ellipsize`, `theme-tokens`, `pane-status`, `legend-keys`, `tabs-bar`, or `pixel-buffer`.
 
 Ready means `drive.sh` exits 0 and writes the evidence file. There is no port and no ready log line. The first run compiles the library; later runs reuse the cargo target directory.
 
@@ -33,7 +33,7 @@ feature configuration with Rust 1.85.0:
 
 ```sh
 cargo fmt --all -- --check
-for feature_args in '' '--features motion' '--no-default-features'; do
+for feature_args in '' '--features motion' '--features pixel-buffer' '--no-default-features'; do
     cargo clippy --workspace --locked --all-targets $feature_args -- -D warnings
     cargo test --workspace --locked $feature_args
     RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked $feature_args
@@ -208,3 +208,14 @@ solver preserves best-effort behavior for incompatible backgrounds; the
 property generator states its admissible domain instead of discarding failures.
 Repeat the public example and property tests from a clean local VM and retain
 the exact head and output as behavior proof.
+
+## Motion timing and curves
+
+Run `cargo test --locked --features motion` and
+`cargo run --quiet --locked --example motion_tokens --features motion`.
+The example must print durations `80ms/160ms/240ms` and a `300ms` cap.
+Ease-out at time 0.1 is 0.15625, and at time 0.2 is 0.5. Ease-in at time
+0.325 is 0.15625, and at time 0.65 is 0.5. These are analytic points on the
+specified CSS cubic-bezier curves, with time obtained from the x coordinate.
+Run those commands from a clean local VM and record the exact commit and
+stdout. The motion feature stays disabled by default.
