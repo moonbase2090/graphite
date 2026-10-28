@@ -40,6 +40,10 @@ name = "theme_toml"
 required-features = ["serde"]
 
 [[example]]
+name = "theme_crossfade"
+required-features = ["motion"]
+
+[[example]]
 name = "motion_tokens"
 required-features = ["motion"]
 
