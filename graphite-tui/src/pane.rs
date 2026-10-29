@@ -1,7 +1,7 @@
 //! Pane chrome widget: border, title row, status.
 
 use crate::cells::{cell_rect, fill, mid_row, text, text_right, Small};
-use crate::style::style;
+use crate::style::{style, text_style};
 use graphite_core::{PaneStatus, Rect as PxRect, Tokens};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -96,9 +96,16 @@ impl Widget for PaneChrome<'_> {
         let right = head.right().saturating_sub(1);
         let status_w = crate::cells::display_width(label);
         let name_limit = right.saturating_sub(status_w + 1).max(head.x + 3);
-        text(buf, head.x + 3, y, name_limit, self.name, style(fg, bg));
+        text(
+            buf,
+            head.x + 3,
+            y,
+            name_limit,
+            self.name,
+            text_style(fg, bg),
+        );
         if !label.is_empty() {
-            text_right(buf, right, y, head.x + 3, label, style(status_fg, bg));
+            text_right(buf, right, y, head.x + 3, label, text_style(status_fg, bg));
         }
     }
 }

@@ -1,7 +1,7 @@
 //! Buffer-snapshot tests: one text snapshot per widget plus token color checks.
 //! Run with `UPDATE_SNAPSHOTS=1` to rewrite the files in `tests/snapshots`.
 
-use graphite_core::{sidebar_layout, Tokens};
+use graphite_core::{contrast_ratio, sidebar_layout, Tokens};
 use graphite_core::{Dot, LegendRun, PaneStatus, Rect as PxRect, SidebarRow, TabText, DARK, LIGHT};
 use graphite_tui::{
     legend_layout, picker_layout, tabs_bar_layout, Legend, PaneChrome, Picker, SideRail, Sidebar,
@@ -85,6 +85,31 @@ fn tabs_bar_colors_come_from_tokens() {
         assert_eq!(buf[(0, 0)].bg, rgb(t.bar));
         assert_eq!(buf[(5, 2)].bg, rgb(t.bar_line));
     }
+}
+
+#[test]
+fn tabs_bar_resolves_text_per_conflicting_surface_and_keeps_dot_color() {
+    let mut tokens = DARK;
+    tokens.bar = [0, 0, 0];
+    tokens.tab_active = [118, 118, 118];
+    tokens.text_strong = [40, 40, 40];
+    tokens.working = [21, 210, 91];
+    let buf = render_tabs(&tokens);
+    let layout = tabs_bar_layout(90, "Graphite", &tabs(), "Ctrl K");
+    let chip = layout.tabs[0].chip;
+    let y = (chip.y / CELL_H + 1) as u16;
+    let dot = ((chip.x / CELL_W + 1) as u16, y);
+    let label = ((chip.x / CELL_W + 3) as u16, y);
+    let actual_bg = [118, 118, 118];
+    let actual_ink = match buf[label].fg {
+        Color::Rgb(r, g, b) => [r, g, b],
+        other => panic!("expected truecolor text ink, got {other:?}"),
+    };
+    assert_eq!(buf[label].bg, rgb(actual_bg));
+    assert!(contrast_ratio(actual_ink, actual_bg) >= 4.5);
+    assert_ne!(actual_ink, tokens.text_strong);
+    assert_eq!(buf[dot].fg, rgb(tokens.working));
+    assert_eq!(buf[dot].bg, rgb(actual_bg));
 }
 
 #[test]

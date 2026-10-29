@@ -1,12 +1,13 @@
 # Theme tokens
 
-Theme tokens hand a host the dark or light Graphite palette. Text on the dark ground stays at least WCAG AA contrast, and black on white is the reference ratio of 21.
+Theme tokens hand a host the dark or light Graphite palette. `text_ink` resolves preferred text against one actual fill, including when host fills conflict. Its truecolor RGB result reaches WCAG AA contrast; black on white is the reference ratio of 21.
 
 ## Sub-features
 
 - `tokens-dark` returns the dark ground color.
 - `tokens-light` returns the light primary text color.
 - `tokens-contrast` reports black-on-white and dark text-on-ground contrast.
+- `tokens-per-surface` resolves one preferred ink across black, white, and mid-gray fills and reports each resulting contrast ratio.
 - `tokens-series` reports the six chart series colors for each palette. The driver builds graphite-core with the opt-in `series` feature; default builds have no `series` field.
 
 ## How to get to it (user POV)

@@ -1,5 +1,5 @@
 use graphite_core::{
-    bar_hit, bar_layout, contrast_ratio, ellipsize, legend_keys, status_width, tokens, BarHit, Dot,
+    bar_hit, bar_layout, contrast_ratio, ellipsize, legend_keys, status_width, text_ink, tokens, BarHit, Dot,
     Face, LegendRun, PaneStatus, PixelBuffer, Rect, Rgba, TabText, TextMetrics, ThemeVariant,
 };
 
@@ -22,13 +22,14 @@ impl TextMetrics for CharTimesPx {
 fn main() {
     let feature = std::env::args().nth(1).unwrap_or_else(|| {
         eprintln!(
-            "usage: verify-graphite <ellipsize|theme-tokens|pane-status|legend-keys|tabs-bar|pixel-buffer>"
+            "usage: verify-graphite <ellipsize|theme-tokens|pane-status|legend-keys|tabs-bar|pixel-buffer|per-surface-text>"
         );
         std::process::exit(2);
     });
     match feature.as_str() {
         "ellipsize" => drive_ellipsize(),
         "theme-tokens" => drive_theme_tokens(),
+        "per-surface-text" => drive_per_surface_text(),
         "pane-status" => drive_pane_status(),
         "legend-keys" => drive_legend_keys(),
         "tabs-bar" => drive_tabs_bar(),
@@ -38,6 +39,20 @@ fn main() {
             std::process::exit(2);
         }
     }
+}
+
+fn drive_per_surface_text() {
+    let preferred = [128, 128, 128];
+    let backgrounds = [[0, 0, 0], [255, 255, 255], [118, 118, 118]];
+    println!("feature per-surface-text");
+    for (name, background) in ["black", "white", "mid-gray"].into_iter().zip(backgrounds) {
+        let ink = text_ink(preferred, background);
+        let ratio = contrast_ratio(ink, background);
+        println!("{name} ink={},{},{} background={},{},{} contrast={ratio:.4}",
+            ink[0], ink[1], ink[2], background[0], background[1], background[2]);
+        assert!(ratio >= 4.5);
+    }
+    assert_ne!(text_ink(preferred, backgrounds[0]), text_ink(preferred, backgrounds[1]));
 }
 
 fn drive_pixel_buffer() {

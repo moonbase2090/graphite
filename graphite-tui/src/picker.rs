@@ -1,7 +1,7 @@
 //! Theme picker widget.
 
 use crate::cells::{cell_rect, fill, mid_row, text};
-use crate::style::style;
+use crate::style::{style, text_style};
 use graphite_core::{ThemePickerLayout, Tokens};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -50,7 +50,7 @@ impl Widget for Picker<'_> {
             panel.y,
             panel.right(),
             " Themes ",
-            style(t.text_strong, t.panel),
+            text_style(t.text_strong, t.panel),
         );
         if let Some(c) = cell_rect(area, l.close) {
             text(
@@ -59,7 +59,7 @@ impl Widget for Picker<'_> {
                 mid_row(c),
                 c.right(),
                 "×",
-                style(t.muted, t.panel),
+                text_style(t.muted, t.panel),
             );
         }
         for i in 0..l.visible_rows {
@@ -80,7 +80,14 @@ impl Widget for Picker<'_> {
                 (t.tab_text, t.panel)
             };
             fill(buf, r, style(fg, bg));
-            text(buf, r.x + 2, mid_row(r), r.right(), name, style(fg, bg));
+            text(
+                buf,
+                r.x + 2,
+                mid_row(r),
+                r.right(),
+                name,
+                text_style(fg, bg),
+            );
         }
         if let Some(f) = cell_rect(
             area,
@@ -97,7 +104,7 @@ impl Widget for Picker<'_> {
                 mid_row(f),
                 f.right(),
                 "↑↓ choose · enter apply · esc close",
-                style(t.muted, t.panel),
+                text_style(t.muted, t.panel),
             );
         }
     }

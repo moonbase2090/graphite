@@ -60,6 +60,9 @@ pub struct StateStyle {
 /// Resolves the style for `state` at `depth`.
 ///
 /// `accent` is the focus color, normally `accent(tokens, DEFAULT_ACCENT)`.
+/// The returned primary and muted inks are each resolved against the final
+/// `bg` for this state. For limited terminal depths, later palette mapping can
+/// still change their contrast.
 pub fn state_style(
     tokens: &Tokens,
     accent: Rgb,
@@ -127,6 +130,8 @@ pub fn state_style(
             style.bg = base.bg;
         }
     }
+    style.fg = crate::text_ink(style.fg, style.bg);
+    style.muted = crate::text_ink(style.muted, style.bg);
     style
 }
 
@@ -235,6 +240,24 @@ mod tests {
                     }
                 }
             }
+        }
+    }
+
+    #[test]
+    fn state_text_resolves_against_each_conflicting_state_fill() {
+        let mut tokens = DARK;
+        tokens.panel = [255; 3];
+        tokens.title_hover = [0; 3];
+        tokens.title_focus = [118; 3];
+        tokens.text = [128; 3];
+        tokens.text_strong = [128; 3];
+        tokens.muted = [128; 3];
+        tokens.muted_focus = [128; 3];
+
+        for state in [WidgetState::Normal, WidgetState::Hover, WidgetState::Focus] {
+            let resolved = state_style(&tokens, DEFAULT_ACCENT, state, ColorDepth::TrueColor);
+            assert!(contrast_ratio(resolved.fg, resolved.bg) >= 4.5);
+            assert!(contrast_ratio(resolved.muted, resolved.bg) >= 4.5);
         }
     }
 
