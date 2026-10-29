@@ -110,5 +110,6 @@ snap to the end state; Graphite does not read the environment.
 - No hex literals or raw `Color::Rgb` calls remain outside the one place that
   converts a token to your renderer's color type.
 - Use `text_ink` with the final fill for every text draw, then check that pair for 4.5:1; check focus and outline edges for 3:1.
+- Colored status dots are non-text indicators. They retain their semantic token colors; `text_ink` does not change them, and the 4.5:1 text guarantee does not apply. Their contrast remains theme-dependent; no minimum ratio is guaranteed for dots.
 - Switching theme does not rebuild widgets, only the resolved palette.
 - Rendering a frame with nothing changed performs no allocation.
