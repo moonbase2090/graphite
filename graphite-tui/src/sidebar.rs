@@ -1,7 +1,7 @@
 //! Sidebar widget.
 
 use crate::cells::{cell_rect, display_width, fill, mid_row, text, text_right, Small};
-use crate::style::{dot_color, style};
+use crate::style::{dot_color, style, text_style};
 use graphite_core::{SidebarLayout, SidebarRow, Tokens, SIDEBAR_ACTIONS};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -42,7 +42,7 @@ impl Widget for Sidebar<'_> {
                 mid_row(head),
                 head.right(),
                 "Workspace",
-                style(t.text_strong, t.bar),
+                text_style(t.text_strong, t.bar),
             );
         }
         for (slot, row) in l.rows.iter().zip(self.rows.iter().skip(l.first_row)) {
@@ -71,7 +71,7 @@ impl Widget for Sidebar<'_> {
                     y,
                     r.right(),
                     if open { "▾" } else { "▸" },
-                    style(t.muted, bg),
+                    text_style(t.muted, bg),
                 );
             }
             x += 2;
@@ -83,14 +83,28 @@ impl Widget for Sidebar<'_> {
             let mut badge = Small::new();
             if row.needs_you > 0 {
                 let _ = write!(badge, "{} needs you", row.needs_you);
-                text_right(buf, right, y, x, badge.as_str(), style(t.attention, bg));
+                text_right(
+                    buf,
+                    right,
+                    y,
+                    x,
+                    badge.as_str(),
+                    text_style(t.attention, bg),
+                );
                 right = right.saturating_sub(display_width(badge.as_str()) + 1);
             } else if row.mail > 0 {
                 let _ = write!(badge, "{} mail", row.mail);
-                text_right(buf, right, y, x, badge.as_str(), style(t.unseen_text, bg));
+                text_right(
+                    buf,
+                    right,
+                    y,
+                    x,
+                    badge.as_str(),
+                    text_style(t.unseen_text, bg),
+                );
                 right = right.saturating_sub(display_width(badge.as_str()) + 1);
             }
-            text(buf, x, y, right.max(x), row.label, style(fg, bg));
+            text(buf, x, y, right.max(x), row.label, text_style(fg, bg));
         }
         if let Some(thumb) = l.thumb.and_then(|th| cell_rect(area, th)) {
             fill(buf, thumb, style(t.separator, t.separator));
@@ -107,7 +121,7 @@ impl Widget for Sidebar<'_> {
                     mid_row(r),
                     r.right(),
                     label,
-                    style(t.muted, t.bar),
+                    text_style(t.muted, t.bar),
                 );
             }
         }

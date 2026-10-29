@@ -1,7 +1,7 @@
 //! Spaces rail widget.
 
 use crate::cells::{fill, text, CellMetrics, CELL_W, SCALE_MILLI};
-use crate::style::style;
+use crate::style::{style, text_style};
 use graphite_core::{rail_chip_width, rail_plus_width, Tokens};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -53,14 +53,14 @@ impl Widget for SideRail<'_> {
                 text(buf, tx, y, limit, "●", style(t.working, bg));
                 tx += 2;
             }
-            text(buf, tx, y, limit, label, style(fg, bg));
+            text(buf, tx, y, limit, label, text_style(fg, bg));
             text(
                 buf,
                 x + w.saturating_sub(2),
                 y,
                 limit,
                 "×",
-                style(t.muted, bg),
+                text_style(t.muted, bg),
             );
             x += w + 1;
         }
@@ -72,7 +72,7 @@ impl Widget for SideRail<'_> {
                 y,
                 limit,
                 "+ New space",
-                style(t.muted, t.status_bar),
+                text_style(t.muted, t.status_bar),
             );
         }
     }

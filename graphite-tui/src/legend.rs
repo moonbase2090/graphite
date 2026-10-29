@@ -1,7 +1,7 @@
 //! Legend widget.
 
 use crate::cells::{cell_rect, fill, mid_row, text};
-use crate::style::style;
+use crate::style::{style, text_style};
 use graphite_core::{LegendPaint, Tokens};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -26,7 +26,7 @@ impl Widget for Legend<'_> {
         for chip in &self.paint.chips {
             if let Some(r) = cell_rect(area, chip.rect) {
                 fill(buf, r, style(t.key_text, t.key));
-                let (y, s) = (mid_row(r), style(t.key_text, t.key));
+                let (y, s) = (mid_row(r), text_style(t.key_text, t.key));
                 text(buf, r.x + 1, y, r.right(), &chip.label, s);
             }
         }
@@ -38,7 +38,7 @@ impl Widget for Legend<'_> {
                     mid_row(r),
                     area.right(),
                     &item.text,
-                    style(t.muted, t.ground),
+                    text_style(t.muted, t.ground),
                 );
             }
         }

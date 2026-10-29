@@ -35,6 +35,8 @@ Each feature file starts with an H1 and one paragraph, then exactly four H2 sect
 
 - [Ellipsize](./ellipsize.md) truncates a label that does not fit and leaves a label that does fit unchanged.
 - [Theme tokens](./theme-tokens.md) returns the dark and light color sets and their contrast.
+- [Per-surface text](./per-surface-text.md) resolves one preferred ink against conflicting actual fills.
+- [Per-surface text](./per-surface-text.md) resolves one preferred ink against conflicting actual fills.
 - [Pane status](./pane-status.md) chooses a pane-header status and measures its label.
 - [Legend keys](./legend-keys.md) places a legend run that fits and drops one that does not.
 - [Tabs bar](./tabs-bar.md) lays out the tabs bar and hit-tests the space menu and the first tab.

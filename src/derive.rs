@@ -41,6 +41,63 @@ const AA: f32 = 4.5;
 #[cfg(feature = "series")]
 const NON_TEXT: f32 = 3.0;
 
+/// Resolve a preferred text color against the fill of one actual surface.
+///
+/// The preferred ink is returned unchanged when it reaches 4.5:1. Otherwise,
+/// Graphite finds the first passing mix along each passing black/white path,
+/// then returns the candidate with the smaller squared RGB distance from the
+/// preferred ink (ties choose black). For 8-bit sRGB, at least one endpoint
+/// passes on every fill.
+/// Call this separately for each surface; one result cannot cover conflicting
+/// backgrounds. This guarantee applies before any terminal palette quantization.
+#[must_use]
+pub fn text_ink(preferred: Rgb, background: Rgb) -> Rgb {
+    if crate::contrast_ratio(preferred, background) >= AA {
+        return preferred;
+    }
+    let black_passes = crate::contrast_ratio(BLACK, background) >= AA;
+    let white_passes = crate::contrast_ratio(WHITE, background) >= AA;
+    match (black_passes, white_passes) {
+        (true, true) => {
+            let toward_black = first_passing_mix(preferred, BLACK, background);
+            let toward_white = first_passing_mix(preferred, WHITE, background);
+            if rgb_distance_squared(preferred, toward_black)
+                <= rgb_distance_squared(preferred, toward_white)
+            {
+                toward_black
+            } else {
+                toward_white
+            }
+        }
+        (true, false) => first_passing_mix(preferred, BLACK, background),
+        (false, true) => first_passing_mix(preferred, WHITE, background),
+        (false, false) => unreachable!("black or white always passes WCAG AA"),
+    }
+}
+
+fn first_passing_mix(preferred: Rgb, pole: Rgb, background: Rgb) -> Rgb {
+    let (mut low, mut high) = (0u16, 256u16);
+    while low < high {
+        let weight = (low + high) / 2;
+        if crate::contrast_ratio(crate::mix_rgb(preferred, pole, weight), background) >= AA {
+            high = weight;
+        } else {
+            low = weight + 1;
+        }
+    }
+    crate::mix_rgb(preferred, pole, low)
+}
+
+fn rgb_distance_squared(a: Rgb, b: Rgb) -> u32 {
+    a.into_iter()
+        .zip(b)
+        .map(|(a, b)| {
+            let delta = i32::from(a) - i32::from(b);
+            (delta * delta) as u32
+        })
+        .sum()
+}
+
 /// Return whether a source is one of the unchanged built-in Graphite themes.
 pub fn uses_brief(source: &ThemeSource) -> bool {
     let brief = crate::tokens::tokens(source.variant);

@@ -60,11 +60,15 @@ are named in `Tokens`; see the rustdoc.
 - A host theme you already have: fill a `ThemeSource` (chrome and default
   colors, the 16 ANSI colors, and the badge colors) and call `theme_tokens`. It
   returns the built-in tokens unchanged for the brief themes and derives the
-  rest. Derivation assumes a coherent palette, where the chrome, field, and
-  active-tab fills are close enough that one ink can read on all of them. It
-  moves text toward black or white to reach 4.5:1, but no ink can reach 4.5:1
-  on every surface of an incoherent theme (for example black chrome, white
-  fields, and a mid-gray active tab). Check the pairs you actually draw.
+  rest. Text fields in `Tokens` are preferred inks. Resolve the ink separately
+  for each actual fill with `text_ink(preferred, background)`, including dynamic
+  row fills and interpolated fills during transitions. One stored ink cannot
+  reach 4.5:1 on every independently conflicting surface (for example black
+  chrome, white fields, and a mid-gray active tab). `text_ink` returns an
+  already-passing preferred color unchanged; otherwise it picks the closest
+  passing color along the black and white RGB-mix paths, by squared channel
+  distance. The guarantee is for the exact sRGB pair before terminal palette
+  quantization, transparency, blending, or renderer overrides.
 - A user theme file: enable `serde` and call `Tokens::from_toml`. Errors name
   the key and the bad value.
 
@@ -105,6 +109,7 @@ snap to the end state; Graphite does not read the environment.
 
 - No hex literals or raw `Color::Rgb` calls remain outside the one place that
   converts a token to your renderer's color type.
-- Check the text and background pairs you actually draw for 4.5:1, and focus and outline edges for 3:1; derived tokens only guarantee this for coherent host palettes.
+- Use `text_ink` with the final fill for every text draw, then check that pair for 4.5:1; check focus and outline edges for 3:1.
+- Colored status dots are non-text indicators. They retain their semantic token colors; `text_ink` does not change them, and the 4.5:1 text guarantee does not apply. Their contrast remains theme-dependent; no minimum ratio is guaranteed for dots.
 - Switching theme does not rebuild widgets, only the resolved palette.
 - Rendering a frame with nothing changed performs no allocation.

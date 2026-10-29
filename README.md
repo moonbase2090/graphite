@@ -22,7 +22,10 @@ For a host theme that is not one of the brief themes, `derive_tokens` builds a
 token set from a `ThemeSource` (chrome and default colors, ANSI palette, and
 variant) and nudges text until it stays readable. `theme_tokens` returns the
 brief tokens verbatim for brief themes and derives the rest. `accent` adjusts a
-focus color until it has 3:1 contrast against the bar.
+focus color until it has 3:1 contrast against the bar. Derived text colors are
+preferred inks; resolve each one against the actual fill with `text_ink` when
+host surfaces can conflict. That per-pair result guarantees 4.5:1 for emitted
+truecolor RGB values, before terminal palette quantization or later blending.
 
 ## Feature flags
 
@@ -39,10 +42,12 @@ focus color until it has 3:1 contrast against the bar.
 Add the crate by path or git, then read colors from tokens and measure contrast:
 
 ```rust
-use graphite_core::{contrast_ratio, tokens, ThemeVariant};
+use graphite_core::{contrast_ratio, text_ink, tokens, ThemeVariant};
 
 let t = tokens(ThemeVariant::Dark);
 assert!(contrast_ratio(t.text, t.bar) >= 4.5);
+let selected_ink = text_ink(t.text_strong, t.tab_active);
+assert!(contrast_ratio(selected_ink, t.tab_active) >= 4.5);
 ```
 
 Layouts take a `TextMetrics` implementation so the host chooses the font. This

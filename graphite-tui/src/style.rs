@@ -1,6 +1,6 @@
 //! The only place token bytes become ratatui colors.
 
-use graphite_core::{Dot, Rgb, Tokens};
+use graphite_core::{text_ink, Dot, Rgb, Tokens};
 use ratatui::style::{Color, Style};
 
 pub(crate) fn color(c: Rgb) -> Color {
@@ -9,6 +9,10 @@ pub(crate) fn color(c: Rgb) -> Color {
 
 pub(crate) fn style(fg: Rgb, bg: Rgb) -> Style {
     Style::new().fg(color(fg)).bg(color(bg))
+}
+
+pub(crate) fn text_style(preferred: Rgb, bg: Rgb) -> Style {
+    style(text_ink(preferred, bg), bg)
 }
 
 pub(crate) fn dot_color(t: &Tokens, dot: Dot) -> Rgb {

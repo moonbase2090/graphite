@@ -44,7 +44,7 @@ pub use color::{
 };
 #[cfg(feature = "motion")]
 pub use crossfade::{crossfade_tokens, THEME_CROSSFADE_DURATION};
-pub use derive::{bar_tokens, derive_tokens, theme_tokens, uses_brief, ThemeSource};
+pub use derive::{bar_tokens, derive_tokens, text_ink, theme_tokens, uses_brief, ThemeSource};
 pub use geom::Rect;
 pub use legend::{legend_keys, LegendChip, LegendPaint, LegendRun, LegendText};
 #[cfg(feature = "motion")]

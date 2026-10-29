@@ -1,6 +1,8 @@
 //! Host-theme properties for backgrounds that share a dark or light polarity.
 //! Arbitrary independent fills can make a shared ink's contrast floor impossible.
-use graphite_core::{accent, contrast_ratio, derive_tokens, Rgb, ThemeSource, ThemeVariant};
+use graphite_core::{
+    accent, contrast_ratio, derive_tokens, text_ink, Rgb, ThemeSource, ThemeVariant,
+};
 use proptest::prelude::*;
 
 fn channel_color(light: bool) -> BoxedStrategy<Rgb> {
@@ -83,6 +85,37 @@ proptest! {
         let focus=accent(&t,source.ansi[4]);
         prop_assert!(contrast_ratio(focus,t.bar)>=3.0,"accent {:?} on {:?}",focus,t.bar);
     }
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig { cases: 1024, ..ProptestConfig::default() })]
+    #[test]
+    fn text_ink_resolves_arbitrary_independent_surfaces(preferred in any::<Rgb>(), background in any::<Rgb>()) {
+        let ink = text_ink(preferred, background);
+        prop_assert!(contrast_ratio(ink, background) >= 4.5,
+            "resolved ink {:?} on {:?} has ratio {}", ink, background, contrast_ratio(ink, background));
+    }
+}
+
+#[test]
+fn per_surface_text_ink_handles_conflicting_fills_independently() {
+    let preferred = [128, 128, 128];
+    let surfaces = [[0, 0, 0], [255, 255, 255], [118, 118, 118]];
+    let resolved = surfaces.map(|background| text_ink(preferred, background));
+    for (ink, background) in resolved.into_iter().zip(surfaces) {
+        assert!(contrast_ratio(ink, background) >= 4.5);
+    }
+    assert_ne!(resolved[0], resolved[1]);
+    assert_eq!(text_ink([20, 80, 190], [255, 255, 255]), [20, 80, 190]);
+    assert!(text_ink([128; 3], [255; 3])[0] < 128);
+    assert!(text_ink([80; 3], [0; 3])[0] > 80);
+    let nearest = text_ink([40; 3], [117; 3]);
+    assert!(contrast_ratio(nearest, [117; 3]) >= 4.5);
+    assert!(
+        nearest[0] < 100,
+        "the closer dark interpolation should win: {nearest:?}"
+    );
+    assert!(contrast_ratio(text_ink([220; 3], [0; 3]), [0; 3]) >= 4.5);
 }
 
 #[test]

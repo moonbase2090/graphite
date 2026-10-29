@@ -16,7 +16,7 @@ From the repository root:
 .cursor/skills/verify-graphite/scripts/drive.sh <feature>
 ```
 
-`<feature>` is `ellipsize`, `theme-tokens`, `pane-status`, `legend-keys`, `tabs-bar`, or `pixel-buffer`.
+`<feature>` is `ellipsize`, `theme-tokens`, `per-surface-text`, `pane-status`, `legend-keys`, `tabs-bar`, or `pixel-buffer`.
 
 Ready means `drive.sh` exits 0 and writes the evidence file. There is no port and no ready log line. The first run compiles the library; later runs reuse the cargo target directory.
 
@@ -214,12 +214,15 @@ and ANSI colors span the full byte range. It checks every documented text
 surface and the accent floor. Existing CI runs this integration test through
 `cargo test`.
 
-Do not describe this as a guarantee for independently arbitrary surfaces. A
-shared ink cannot meet 4.5 on black, white and mid-gray simultaneously. The
-solver preserves best-effort behavior for incompatible backgrounds; the
-property generator states its admissible domain instead of discarding failures.
-Repeat the public example and property tests from a clean local VM and retain
-the exact head and output as behavior proof.
+The `derive_tokens` properties still describe shared token values over coherent
+host palettes; a single shared ink cannot meet 4.5 on black, white and mid-gray
+simultaneously. For independent surfaces, run
+`.cursor/skills/verify-graphite/scripts/drive.sh per-surface-text`. Its public
+API example resolves one preferred ink separately for black, white, and
+mid-gray and asserts every resulting pair reaches 4.5. The migration guide
+documents the exact sRGB scope and the limits introduced by quantization or
+blending. Repeat both the public example and property tests from a clean local
+VM and retain the exact head and output as behavior proof.
 
 ## Motion timing and curves
 

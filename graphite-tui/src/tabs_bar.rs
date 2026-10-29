@@ -1,7 +1,7 @@
 //! Tabs bar widget.
 
 use crate::cells::{cell_rect, display_width, fill, mid_row, text};
-use crate::style::{dot_color, style};
+use crate::style::{dot_color, style, text_style};
 use graphite_core::{BarLayout, Tokens};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -33,7 +33,7 @@ impl Widget for TabsBar<'_> {
 
         if let Some(r) = cell_rect(area, l.dropdown) {
             fill(buf, r, style(t.text_strong, t.tab_hover));
-            let (y, s) = (mid_row(r), style(t.text_strong, t.tab_hover));
+            let (y, s) = (mid_row(r), text_style(t.text_strong, t.tab_hover));
             text(buf, r.x + 1, y, r.right(), &l.space_label, s);
             let end = r.x + 1 + display_width(&l.space_label);
             text(buf, end, y, r.right(), " ▾", s);
@@ -65,10 +65,10 @@ impl Widget for TabsBar<'_> {
             let end = chip.right();
             text(buf, chip.x, y, end, " ●", style(dot_color(t, tab.dot), bg));
             let mut x = chip.x + 3;
-            text(buf, x, y, end, &tab.label, style(fg, bg));
+            text(buf, x, y, end, &tab.label, text_style(fg, bg));
             x += display_width(&tab.label);
             if let Some(meta) = &tab.meta {
-                text(buf, x + 1, y, end, meta, style(t.muted, bg));
+                text(buf, x + 1, y, end, meta, text_style(t.muted, bg));
                 x += 1 + display_width(meta);
             }
             if tab.attention {
@@ -78,20 +78,34 @@ impl Widget for TabsBar<'_> {
                     y,
                     end,
                     " needs you ",
-                    style(t.on_attention, t.attention),
+                    text_style(t.on_attention, t.attention),
                 );
             }
             if let Some(close) = cell_rect(area, tab.close) {
-                text(buf, close.x, y, end, "×", style(t.muted, bg));
+                text(buf, close.x, y, end, "×", text_style(t.muted, bg));
             }
         }
         if let Some(r) = cell_rect(area, l.plus) {
-            text(buf, r.x, mid_row(r), r.right(), "+", style(t.muted, t.bar));
+            text(
+                buf,
+                r.x,
+                mid_row(r),
+                r.right(),
+                "+",
+                text_style(t.muted, t.bar),
+            );
         }
         if let Some(r) = l.command.and_then(|c| cell_rect(area, c)) {
             fill(buf, r, style(t.muted, t.field));
             let y = mid_row(r);
-            text(buf, r.x, y, r.right(), " Commands", style(t.muted, t.field));
+            text(
+                buf,
+                r.x,
+                y,
+                r.right(),
+                " Commands",
+                text_style(t.muted, t.field),
+            );
             let chord_w = display_width(&l.chord) + 1;
             if r.width > chord_w + 10 {
                 text(
@@ -100,7 +114,7 @@ impl Widget for TabsBar<'_> {
                     y,
                     r.right(),
                     &l.chord,
-                    style(t.key_text, t.field),
+                    text_style(t.key_text, t.field),
                 );
             }
         }
