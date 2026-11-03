@@ -2,7 +2,12 @@
 
 ## [Unreleased]
 
-- No changes since 0.1.5.
+- No changes since 0.1.6.
+
+## [0.1.6] - 2026-11-02
+
+- Add `text_ink_for_surface` and use per-surface text ink in TUI widgets and state styles. Resolved ink meets 4.5:1 contrast against the exact sRGB fill before palette quantization, transparency, or later blending (#65).
+- Check Markdown and site links in CI, including rejecting links to unpublished packages (#66).
 
 ## [0.1.5] - 2026-10-28
 
