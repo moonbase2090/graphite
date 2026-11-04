@@ -173,3 +173,50 @@ fn tokens_drive_dark_and_light_chips() {
     let tokens: &Tokens = &DARK;
     assert_ne!(tokens.tab_active, LIGHT.tab_active);
 }
+
+#[test]
+fn pane_chrome_matches_the_ratatui_snapshots() {
+    use graphite_core::{PaneStatus, Rect as PxRect};
+    use graphite_lunatui::{PaneChrome, CELL_H, CELL_W};
+    let slot = PxRect::new(0, 0, 40 * CELL_W, 6 * CELL_H);
+    let focused = PaneChrome::new(slot, "agent-1", PaneStatus::Mail(2), true, &DARK);
+    let trimmed: Vec<String> = rows(&focused, Rect::new(0, 0, 40, 6))
+        .iter()
+        .map(|row| row.trim_end().to_string())
+        .collect();
+    assert_eq!(
+        trimmed,
+        [
+            "╭──────────────────────────────────────╮",
+            "│ ● agent-1                     2 mail │",
+            "│                                      │",
+            "│                                      │",
+            "│                                      │",
+            "╰──────────────────────────────────────╯",
+        ]
+    );
+    let (grid, _) = draw(&focused, Rect::new(0, 0, 40, 6));
+    assert_eq!(style_at(&grid, 0, 0).fg, rgb(DARK.title_focus_line));
+    assert_eq!(style_at(&grid, 5, 1).bg, rgb(DARK.title_focus));
+    let quiet = PaneChrome::new(slot, "agent-2", PaneStatus::Quiet, false, &LIGHT);
+    let (grid, clusters) = draw(&quiet, Rect::new(0, 0, 40, 6));
+    assert_eq!(
+        grid.row_display(1, &clusters).trim_end(),
+        "│ ● agent-2                            │"
+    );
+    assert_eq!(style_at(&grid, 0, 0).fg, rgb(LIGHT.hairline));
+}
+
+#[test]
+fn side_rail_matches_the_ratatui_snapshot() {
+    use graphite_lunatui::SideRail;
+    let rail = SideRail::new(&["main", "docs"], 0, &DARK);
+    let trimmed: Vec<String> = rows(&rail, Rect::new(0, 0, 60, 2))
+        .iter()
+        .map(|row| row.trim_end().to_string())
+        .collect();
+    assert_eq!(trimmed, ["", "  ● main×   docs ×   + New space"]);
+    let (grid, _) = draw(&rail, Rect::new(0, 0, 60, 2));
+    assert_eq!(style_at(&grid, 0, 1).bg, rgb(DARK.status_bar));
+    assert_eq!(style_at(&grid, 3, 1).bg, rgb(DARK.chip_active));
+}
