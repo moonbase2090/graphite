@@ -1,0 +1,17 @@
+[package]
+name = "graphite-lunatui"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT"
+publish = false
+repository = "https://github.com/moonbase2090/graphite"
+description = "Lunatui chrome widgets drawn from Graphite tokens."
+
+[dependencies]
+graphite-core = { path = ".." }
+lunatui-core = { git = "https://github.com/moonbase2090/lunatui", rev = "58f6aeacf023f388524f7c4f34b414252ce9d26d" }
+lunatui-theme = { git = "https://github.com/moonbase2090/lunatui", rev = "58f6aeacf023f388524f7c4f34b414252ce9d26d" }
+lunatui-widgets = { git = "https://github.com/moonbase2090/lunatui", rev = "58f6aeacf023f388524f7c4f34b414252ce9d26d", default-features = false }
+
+[workspace]
