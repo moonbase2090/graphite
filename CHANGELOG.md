@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-- No changes since 0.1.6.
+- No changes since 0.1.7.
+
+## [0.1.7] - 2026-11-04
+
+- Add `graphite-lunatui`: the Graphite chrome (tabs bar, side rail, sidebar, pane, legend, theme picker) as lunatui widgets, rendering the same graphite-core layouts cell for cell with the Ratatui crate, plus `StatusDot`, `Chip`, and count-pill `Badge` widgets. The crate is excluded from the Rust 1.85 workspace and builds on Rust 1.88 against a pinned lunatui revision; `graphite-core` and `graphite-tui` are unchanged (#68).
 
 ## [0.1.6] - 2026-11-02
 

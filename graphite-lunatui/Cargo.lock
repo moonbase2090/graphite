@@ -40,14 +40,14 @@ checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 
 [[package]]
 name = "graphite-core"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "unicode-segmentation",
 ]
 
 [[package]]
 name = "graphite-lunatui"
-version = "0.1.0"
+version = "0.1.7"
 dependencies = [
  "graphite-core",
  "lunatui-core",
