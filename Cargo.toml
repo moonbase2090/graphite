@@ -1,5 +1,7 @@
 [workspace]
 members = [".", "graphite-tui"]
+# graphite-lunatui pins lunatui (Rust 1.88) and builds in its own CI job.
+exclude = ["graphite-lunatui"]
 
 [package]
 name = "graphite-core"
