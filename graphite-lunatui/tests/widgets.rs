@@ -220,3 +220,120 @@ fn side_rail_matches_the_ratatui_snapshot() {
     assert_eq!(style_at(&grid, 0, 1).bg, rgb(DARK.status_bar));
     assert_eq!(style_at(&grid, 3, 1).bg, rgb(DARK.chip_active));
 }
+
+#[test]
+fn sidebar_matches_the_ratatui_snapshot() {
+    use graphite_core::{sidebar_layout, Rect as PxRect, SidebarRow};
+    use graphite_lunatui::{Sidebar, CELL_H, CELL_W};
+    let row = |label, depth, selected, mail, needs_you, dot| SidebarRow {
+        slot: PxRect::new(0, 0, 0, 0),
+        depth,
+        chevron: if depth == 0 { Some(true) } else { None },
+        dot,
+        label,
+        mail,
+        needs_you,
+        selected,
+        hovered: false,
+    };
+    let side_rows = vec![
+        row("main", 0, false, 0, 0, Some(Dot::Idle)),
+        row("build", 1, true, 3, 0, Some(Dot::Working)),
+        row("review", 1, false, 0, 2, Some(Dot::Attention)),
+    ];
+    let layout = sidebar_layout(1000, PxRect::new(0, 0, 32 * CELL_W, 14 * CELL_H), 3, 0);
+    let widget = Sidebar::new(&layout, &side_rows, &DARK);
+    let trimmed: Vec<String> = rows(&widget, Rect::new(0, 0, 32, 14))
+        .iter()
+        .map(|row| row.trim_end().to_string())
+        .collect();
+    assert_eq!(
+        trimmed,
+        [
+            "",
+            " Workspace",
+            "",
+            " ▾ ● main",
+            "",
+            "     ● build             3 mail",
+            "     ● review       2 needs you",
+            "",
+            "",
+            " + New tab",
+            "",
+            " + New space",
+            "",
+            " Commands",
+        ]
+    );
+    let (grid, _) = draw(&widget, Rect::new(0, 0, 32, 14));
+    let selected_y = u16::try_from(layout.rows[1].y / CELL_H).unwrap_or(0);
+    assert_eq!(style_at(&grid, 1, selected_y).bg, rgb(DARK.tab_active));
+}
+
+#[test]
+fn legend_matches_the_ratatui_snapshot() {
+    use graphite_core::LegendRun;
+    use graphite_lunatui::{legend_layout, Legend, CELL_H, CELL_W};
+    let runs = vec![
+        LegendRun::Keys {
+            caps: vec!["Ctrl".into(), "K".into()],
+            caption: "commands".into(),
+        },
+        LegendRun::Text("3 panes".into()),
+    ];
+    let paint = legend_layout(50, 2, 1, &runs);
+    let widget = Legend::new(&paint, &DARK);
+    let trimmed: Vec<String> = rows(&widget, Rect::new(0, 0, 50, 2))
+        .iter()
+        .map(|row| row.trim_end().to_string())
+        .collect();
+    assert_eq!(trimmed, ["", "   Ctrl  K commands 3 panes"]);
+    let (grid, _) = draw(&widget, Rect::new(0, 0, 50, 2));
+    let chip = &paint.chips[0];
+    let x = u16::try_from((chip.rect.x + CELL_W / 2) / CELL_W).unwrap_or(0);
+    let y = u16::try_from((chip.rect.y + CELL_H / 2) / CELL_H).unwrap_or(0);
+    assert_eq!(style_at(&grid, x, y).bg, rgb(DARK.key));
+}
+
+#[test]
+fn picker_snapshot_lines_and_colors() {
+    use graphite_lunatui::{picker_layout, Picker, CELL_H, CELL_W};
+    let layout = picker_layout(60, 20, 4, 0).expect("picker fits");
+    let names = ["Graphite Dark", "Graphite Light", "Nord", "Solarized"];
+    let widget = Picker::new(&layout, &names, 1, &LIGHT);
+    let (grid, clusters) = draw(&widget, Rect::new(0, 0, 60, 20));
+    let line = |y: u16| grid.row_display(y, &clusters).trim_end().to_string();
+    assert_eq!(
+        line(1),
+        "  ── Themes ──────────────────────────────────────────────"
+    );
+    assert_eq!(line(6), "      Graphite Dark");
+    assert_eq!(line(8), "      Graphite Light");
+    assert_eq!(line(10), "      Nord");
+    assert_eq!(line(13), "      Solarized");
+    assert_eq!(line(17), "    ↑↓ choose · enter apply · esc close");
+    let px = u16::try_from(layout.panel.x / CELL_W + 3).unwrap_or(0);
+    let py = u16::try_from(layout.panel.y / CELL_H + 4).unwrap_or(0);
+    assert_eq!(style_at(&grid, px, py).bg, rgb(LIGHT.panel));
+    // The selected row (index 1) carries the active fill.
+    assert_eq!(style_at(&grid, px, 8).bg, rgb(LIGHT.tab_active));
+}
+
+/// Widget sources must take every color from `Tokens` through `style.rs`,
+/// mirroring the Ratatui crate's guard.
+#[test]
+fn only_style_rs_names_colors() {
+    let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src");
+    for entry in std::fs::read_dir(dir).unwrap() {
+        let path = entry.unwrap().path();
+        if path.file_name().is_some_and(|n| n == "style.rs") {
+            continue;
+        }
+        let src = std::fs::read_to_string(&path).unwrap();
+        let code: String = src.split("#[cfg(test)]").next().unwrap().to_owned();
+        for banned in ["Color::", "Rgb(", "Color {", "0x"] {
+            assert!(!code.contains(banned), "{} uses {banned}", path.display());
+        }
+    }
+}

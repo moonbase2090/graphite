@@ -71,32 +71,6 @@ pub(crate) fn display_width(s: &str) -> u16 {
     u16::try_from(width(s)).unwrap_or(u16::MAX)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn metrics_count_columns() {
-        assert_eq!(CellMetrics.width(Face::Regular, 12.0, "tab"), 24.0);
-        assert_eq!(CellMetrics.width(Face::Regular, 12.0, "日本"), 32.0);
-    }
-
-    #[test]
-    fn rects_round_to_cells_and_clip() {
-        let area = CellRect::new(2, 1, 10, 4);
-        assert_eq!(
-            cell_rect(area, Rect::new(8, 16, 16, 16)),
-            Some(CellRect::new(3, 2, 2, 1))
-        );
-        assert_eq!(
-            cell_rect(area, Rect::new(0, 0, 1, 1)),
-            Some(CellRect::new(2, 1, 1, 1))
-        );
-        assert_eq!(cell_rect(area, Rect::new(800, 0, 8, 16)), None);
-        assert_eq!(cell_rect(area, Rect::new(0, 0, 0, 16)), None);
-    }
-}
-
 /// Draws `s` right-aligned so it ends at `right` (exclusive).
 pub(crate) fn text_right(
     cx: &mut RenderCx<'_>,
@@ -139,5 +113,31 @@ impl std::fmt::Write for Small {
         self.bytes[self.len..self.len + n].copy_from_slice(&s.as_bytes()[..n]);
         self.len += n;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn metrics_count_columns() {
+        assert_eq!(CellMetrics.width(Face::Regular, 12.0, "tab"), 24.0);
+        assert_eq!(CellMetrics.width(Face::Regular, 12.0, "日本"), 32.0);
+    }
+
+    #[test]
+    fn rects_round_to_cells_and_clip() {
+        let area = CellRect::new(2, 1, 10, 4);
+        assert_eq!(
+            cell_rect(area, Rect::new(8, 16, 16, 16)),
+            Some(CellRect::new(3, 2, 2, 1))
+        );
+        assert_eq!(
+            cell_rect(area, Rect::new(0, 0, 1, 1)),
+            Some(CellRect::new(2, 1, 1, 1))
+        );
+        assert_eq!(cell_rect(area, Rect::new(800, 0, 8, 16)), None);
+        assert_eq!(cell_rect(area, Rect::new(0, 0, 0, 16)), None);
     }
 }
