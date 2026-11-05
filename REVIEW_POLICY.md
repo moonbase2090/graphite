@@ -44,7 +44,7 @@ The PR body has a **Proof** section with real evidence: test output, a CI run li
 
 ## 5. Feature gating
 
-Graphite is pure layout and color math. New behavior in trunk code ships behind an option that is off by default, so pinned consumers see no change until they opt in, unless it is a pure fix. Turning an option on by default is its own trunk PR, and that PR is trunk.
+Graphite is pure layout and color math. New behavior in trunk code ships on by default. An option that is off by default is used only when the owner explicitly asks for one for that feature. A pure fix never needs an option. Turning on a feature the owner asked to gate is its own trunk PR. Pinned consumers see a new default only when they move to a new pin, so a change that breaks an existing default needs a version bump.
 
 ## 6. Tests
 
