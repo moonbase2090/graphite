@@ -107,28 +107,43 @@ IDs that Comms and Waypoint already share (`forest-mint`, `mono-sand`,
 seeds when Waypoint adopts the library. Graphite's own `DARK` and `LIGHT` are
 the theme `graphite`.
 
+Every page names its theme. The shared sheet never infers an app's default
+from a missing attribute, because a missing attribute cannot be resolved the
+same way under every scheme selector. The rules are:
+
+- `data-theme` on `<html>` picks the theme, and it is always set before first
+  paint. Each app writes its default into its HTML shell
+  (`<html data-theme="indigo">` for Comms, `data-theme="mono-sand"` for
+  Waypoint). `theme-init.js` then swaps in a saved choice before paint. Comms
+  today removes the attribute for its Indigo default. In the port, Indigo
+  becomes the catalog theme `indigo` and the attribute stays.
+- A page with no `data-theme` gets the `graphite` theme under every scheme.
+  This is a fallback, not a way to select an app default.
+- `data-scheme="light|dark"` forces a scheme. Without it the page follows the
+  system. Comms follows the system only today and keeps doing so. Waypoint
+  already sets `data-scheme`.
+- The sheet sets `color-scheme` in each block, so native controls and
+  scrollbars match.
+
+The generated selectors, for each theme:
+
 ```css
-:root { /* default theme, dark */ }
-:root[data-theme="forest-mint"] { /* … */ }
+:root[data-theme="forest-mint"] { /* dark */ }
 @media (prefers-color-scheme: light) {
-  :root:not([data-scheme="dark"]) { /* default theme, light */ }
-  :root:not([data-scheme="dark"])[data-theme="forest-mint"] { /* … */ }
+  :root[data-theme="forest-mint"]:not([data-scheme="dark"]) { /* light */ }
 }
-:root[data-scheme="light"] { /* default theme, light */ }
-:root[data-scheme="light"][data-theme="forest-mint"] { /* … */ }
+:root[data-theme="forest-mint"][data-scheme="light"] { /* light */ }
 ```
 
-- `data-theme` on `<html>` picks the theme. No attribute means the app's
-  default theme.
-- `data-scheme="light|dark"` forces a scheme. No attribute follows the system.
-  Comms follows the system only today and keeps doing so. Waypoint already
-  sets `data-scheme`.
-- The sheet sets `color-scheme` per block, so native controls and scrollbars
-  match.
-
-Each app chooses its own default theme. Comms uses its current Indigo default,
-and Waypoint uses `mono-sand`. The choice is a single `:root` alias block in
-the app, not a fork of the sheet.
+The `graphite` fallback uses the same three selectors with `:root` in place of
+`:root[data-theme="…"]`. Each themed selector has one more attribute than the
+matching fallback selector. So in all four combinations (system light, system
+dark, explicit light, explicit dark), the themed rule that applies outranks
+every fallback rule that applies. The contract tests check this in a
+browser, reading the computed `--gr-surface` for each combination:
+- `graphite`, a catalog theme, and an unset `data-theme`;
+- an unset, light and dark `data-scheme`;
+- emulated light and dark system schemes.
 
 Bar presets (`BarColor`) and Waypoint's medium tone are not part of the first
 version.
@@ -152,7 +167,7 @@ Starting list:
 | Component | Markup | Behavior |
 | --- | --- | --- |
 | Button | `<button class="gr-button" data-variant="primary\|ghost\|danger">` | Native |
-| Field | `<label class="gr-field">` wrapping label text, control and help or error text; `aria-invalid` and `aria-describedby` on errors | Native |
+| Field | `<div class="gr-field">` holding a `<label for>` with the label text only, the control, and help and error text as siblings outside the label (see below) | Native |
 | Input, textarea, select | `.gr-input`, `.gr-select` | Native |
 | List | `<ul class="gr-list">`; for selection, `role="listbox"` with `role="option"` rows; for navigation, links marked with `aria-current` | Arrow keys, Home/End, typeahead |
 | Tabs | `role="tablist"`, `role="tab"`, `role="tabpanel"` | Roving `tabindex`, arrow keys |
@@ -168,6 +183,33 @@ The first port takes exactly what the Comms redesign ships: its buttons,
 fields, confirm dialog, theme menu, icons, rail and room list. Tabs, toasts and
 the listbox are added when an app first needs them. This table is a starting
 list, not a commitment to build everything before anyone uses it.
+
+### Field markup
+
+The label holds only the label text, so the accessible name is the label and
+nothing else. Help and error text sit outside it and are linked by ID:
+
+```html
+<div class="gr-field">
+  <label for="email">Email</label>
+  <input id="email" class="gr-input" aria-describedby="email-help">
+  <p id="email-help" class="gr-field-help">Enter a work address.</p>
+  <p id="email-error" class="gr-field-error" hidden></p>
+</div>
+```
+
+When the value is invalid, the control gets `aria-invalid="true"`, the error
+element is shown with its text, and `aria-describedby` lists both IDs
+(`email-help email-error`). When the value is valid again, the error ID is
+removed and the element hidden. A field with no help text omits that element
+and its ID.
+
+Both packages test the accessible name and description in a browser, through
+the accessibility tree, in the default and invalid states. The expected
+results:
+- Default: name "Email", description "Enter a work address."
+- Invalid: name "Email", description of the help text followed by the error
+  text.
 
 ### JS package: `web/ui` (`@moonbase2090/graphite-ui`)
 
@@ -270,6 +312,16 @@ fails if it differs from what the pinned graphite revision generates.
   headless browser. Both outputs are compared to the fixture after whitespace
   is normalized. Fixtures are written and reviewed by hand, never regenerated
   from output.
+- **Theme precedence**: in Chromium, the computed `--gr-surface` is checked
+  for every combination of the following:
+  - theme: unset, `graphite`, and a catalog theme;
+  - `data-scheme`: unset, light and dark;
+  - system scheme: emulated light and dark.
+
+  Each result must be that theme's value in the effective scheme.
+- **Accessible names**: both packages check each control's accessible name and
+  description through the browser's accessibility tree, in the default and
+  invalid states.
 - **Behavior tests**: Playwright drives a gallery page for each package with
   keyboard and pointer.
 - **Visual proof**: the gallery is rendered in every theme and scheme and
