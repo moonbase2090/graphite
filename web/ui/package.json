@@ -16,6 +16,7 @@
     "./navigation": "./navigation.js",
     "./theme-menu": "./theme-menu.js",
     "./theme-init": "./theme-init.js",
+    "./theme-bootstrap": "./theme-bootstrap.js",
     "./theme-catalog": "./theme-catalog.js",
     "./components.css": "./components.css",
     "./tokens.css": "./tokens.css"

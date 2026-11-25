@@ -1,6 +1,7 @@
 //! Dioxus components implementing the Graphite UI HTML contracts.
 
 use dioxus::prelude::*;
+use dioxus::web::WebEventExt;
 use wasm_bindgen::JsCast;
 
 /// Shared stylesheet for Dioxus apps. Keep the source token and component CSS
@@ -101,7 +102,7 @@ pub fn ConfirmDialog(
 ) -> Element {
     let title_id = format!("{id}-message");
     let effect_id = id.clone();
-    use_effect(move || {
+    use_effect(use_reactive!(|open| {
         let Some(document) = web_sys::window().and_then(|window| window.document()) else {
             return;
         };
@@ -116,7 +117,7 @@ pub fn ConfirmDialog(
         } else if !open && dialog.open() {
             dialog.close();
         }
-    });
+    }));
     let confirm_label = confirm_label.unwrap_or_else(|| "OK".to_owned());
     let cancel_label = cancel_label.unwrap_or_else(|| "Cancel".to_owned());
     let cancel_for_key = on_cancel.clone();
@@ -192,8 +193,31 @@ pub fn ThemeMenu(
     on_change: EventHandler<String>,
     on_scheme_change: EventHandler<Option<String>>,
 ) -> Element {
+    let close_on_escape = move |event: Event<KeyboardData>| {
+        if event.key() != Key::Escape {
+            return;
+        }
+        event.prevent_default();
+        let Some(element) = event
+            .data()
+            .as_web_event()
+            .target()
+            .and_then(|target| target.dyn_into::<web_sys::Element>().ok())
+        else {
+            return;
+        };
+        let Ok(Some(details)) = element.closest("details") else {
+            return;
+        };
+        let _ = details.remove_attribute("open");
+        if let Ok(Some(summary)) = details.query_selector("summary") {
+            if let Ok(summary) = summary.dyn_into::<web_sys::HtmlElement>() {
+                let _ = summary.focus();
+            }
+        }
+    };
     rsx! {
-        details { class: "gr-menu gr-theme-menu",
+        details { class: "gr-menu gr-theme-menu", onkeydown: close_on_escape,
             summary { class: "gr-theme-menu-button", "Theme" }
             fieldset { class: "gr-theme-panel",
                 legend { "Theme" }

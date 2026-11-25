@@ -247,13 +247,18 @@ fn dashboard_source(seed: &ThemeSeed, variant: ThemeVariant) -> ThemeSource {
     }
 }
 
-fn control_edge(line: Rgb, ink: Rgb, surface: Rgb) -> Rgb {
-    if contrast_ratio(line, surface) >= 3.0 {
+fn control_edge(line: Rgb, ink: Rgb, surfaces: &[Rgb]) -> Rgb {
+    let clears_floor = |candidate| {
+        surfaces
+            .iter()
+            .all(|surface| contrast_ratio(candidate, *surface) >= 3.0)
+    };
+    if clears_floor(line) {
         return line;
     }
     for weight in 1..=256 {
         let candidate = mix_rgb(line, ink, weight);
-        if contrast_ratio(candidate, surface) >= 3.0 {
+        if clears_floor(candidate) {
             return candidate;
         }
     }
@@ -318,7 +323,11 @@ fn write_palette_block(out: &mut String, indent: &str, selector: &str, p: &WebPa
         hex(p.surface_sunken)
     );
     let _ = writeln!(out, "{indent}  --gr-line: {};", hex(p.line));
-    let edge = control_edge(p.line_strong, p.ink, p.surface);
+    let edge = control_edge(
+        p.line_strong,
+        p.ink,
+        &[p.ground, p.surface, p.surface_raised],
+    );
     let _ = writeln!(out, "{indent}  --gr-line-strong: {};", hex(p.line_strong));
     let _ = writeln!(out, "{indent}  --gr-control-edge: {};", hex(edge));
     let _ = writeln!(out, "{indent}  --gr-ink: {};", hex(p.ink));
@@ -461,7 +470,14 @@ mod tests {
     #[test]
     fn light_control_edge_clears_three_to_one() {
         let p = map_tokens(&LIGHT, INDIGO_LIGHT_ACCENT);
-        assert!(contrast_ratio(control_edge(p.line_strong, p.ink, p.surface), p.surface) >= 3.0);
+        let edge = control_edge(
+            p.line_strong,
+            p.ink,
+            &[p.ground, p.surface, p.surface_raised],
+        );
+        for surface in [p.ground, p.surface, p.surface_raised] {
+            assert!(contrast_ratio(edge, surface) >= 3.0);
+        }
     }
     #[test]
     fn generated_file_is_current() {
@@ -512,7 +528,18 @@ mod tests {
                     );
                 }
                 assert!(
-                    contrast_ratio(control_edge(p.line_strong, p.ink, p.surface), p.surface) >= 3.0,
+                    [p.ground, p.surface, p.surface_raised]
+                        .into_iter()
+                        .all(|surface| {
+                            contrast_ratio(
+                                control_edge(
+                                    p.line_strong,
+                                    p.ink,
+                                    &[p.ground, p.surface, p.surface_raised],
+                                ),
+                                surface,
+                            ) >= 3.0
+                        }),
                     "{theme} {variant:?} control edge"
                 );
             }

@@ -56,7 +56,7 @@
     --gr-surface-sunken: #e4e7ec;
     --gr-line: #d5d9df;
     --gr-line-strong: #a9b0ba;
-    --gr-control-edge: #8f959e;
+    --gr-control-edge: #828891;
     --gr-ink: #1f2329;
     --gr-ink-muted: #5b6472;
     --gr-ink-faint: #8a929e;
@@ -80,7 +80,7 @@
   --gr-surface-sunken: #e4e7ec;
   --gr-line: #d5d9df;
   --gr-line-strong: #a9b0ba;
-  --gr-control-edge: #8f959e;
+  --gr-control-edge: #828891;
   --gr-ink: #1f2329;
   --gr-ink-muted: #5b6472;
   --gr-ink-faint: #8a929e;
@@ -127,7 +127,7 @@
     --gr-surface-sunken: #e4e7ec;
     --gr-line: #d5d9df;
     --gr-line-strong: #a9b0ba;
-    --gr-control-edge: #8f959e;
+    --gr-control-edge: #828891;
     --gr-ink: #1f2329;
     --gr-ink-muted: #5b6472;
     --gr-ink-faint: #8a929e;
@@ -151,7 +151,7 @@
   --gr-surface-sunken: #e4e7ec;
   --gr-line: #d5d9df;
   --gr-line-strong: #a9b0ba;
-  --gr-control-edge: #8f959e;
+  --gr-control-edge: #828891;
   --gr-ink: #1f2329;
   --gr-ink-muted: #5b6472;
   --gr-ink-faint: #8a929e;
@@ -198,7 +198,7 @@
     --gr-surface-sunken: #e4e7ec;
     --gr-line: #d5d9df;
     --gr-line-strong: #a9b0ba;
-    --gr-control-edge: #8f959e;
+    --gr-control-edge: #828891;
     --gr-ink: #1f2329;
     --gr-ink-muted: #5b6472;
     --gr-ink-faint: #8a929e;
@@ -222,7 +222,7 @@
   --gr-surface-sunken: #e4e7ec;
   --gr-line: #d5d9df;
   --gr-line-strong: #a9b0ba;
-  --gr-control-edge: #8f959e;
+  --gr-control-edge: #828891;
   --gr-ink: #1f2329;
   --gr-ink-muted: #5b6472;
   --gr-ink-faint: #8a929e;
@@ -269,7 +269,7 @@
     --gr-surface-sunken: #dbdee2;
     --gr-line: #c2c7cf;
     --gr-line-strong: #b3b6bb;
-    --gr-control-edge: #92959b;
+    --gr-control-edge: #7e8187;
     --gr-ink: #1f2329;
     --gr-ink-muted: #595d62;
     --gr-ink-faint: #82858a;
@@ -293,7 +293,7 @@
   --gr-surface-sunken: #dbdee2;
   --gr-line: #c2c7cf;
   --gr-line-strong: #b3b6bb;
-  --gr-control-edge: #92959b;
+  --gr-control-edge: #7e8187;
   --gr-ink: #1f2329;
   --gr-ink-muted: #595d62;
   --gr-ink-faint: #82858a;
@@ -340,7 +340,7 @@
     --gr-surface-sunken: #dae0e2;
     --gr-line: #becdd1;
     --gr-line-strong: #b2b8bb;
-    --gr-control-edge: #909599;
+    --gr-control-edge: #7d8286;
     --gr-ink: #1f2329;
     --gr-ink-muted: #595e62;
     --gr-ink-faint: #81868a;
@@ -364,7 +364,7 @@
   --gr-surface-sunken: #dae0e2;
   --gr-line: #becdd1;
   --gr-line-strong: #b2b8bb;
-  --gr-control-edge: #909599;
+  --gr-control-edge: #7d8286;
   --gr-ink: #1f2329;
   --gr-ink-muted: #595e62;
   --gr-ink-faint: #81868a;
@@ -411,7 +411,7 @@
     --gr-surface-sunken: #dddee0;
     --gr-line: #c7c9cc;
     --gr-line-strong: #b5b6b9;
-    --gr-control-edge: #939598;
+    --gr-control-edge: #7f8185;
     --gr-ink: #1f2329;
     --gr-ink-muted: #5a5d62;
     --gr-ink-faint: #838589;
@@ -435,7 +435,7 @@
   --gr-surface-sunken: #dddee0;
   --gr-line: #c7c9cc;
   --gr-line-strong: #b5b6b9;
-  --gr-control-edge: #939598;
+  --gr-control-edge: #7f8185;
   --gr-ink: #1f2329;
   --gr-ink-muted: #5a5d62;
   --gr-ink-faint: #838589;
@@ -482,7 +482,7 @@
     --gr-surface-sunken: #d8dee3;
     --gr-line: #bcc9d4;
     --gr-line-strong: #b1b6bc;
-    --gr-control-edge: #91959b;
+    --gr-control-edge: #7d8187;
     --gr-ink: #1f2329;
     --gr-ink-muted: #585d63;
     --gr-ink-faint: #80858b;
@@ -506,7 +506,7 @@
   --gr-surface-sunken: #d8dee3;
   --gr-line: #bcc9d4;
   --gr-line-strong: #b1b6bc;
-  --gr-control-edge: #91959b;
+  --gr-control-edge: #7d8187;
   --gr-ink: #1f2329;
   --gr-ink-muted: #585d63;
   --gr-ink-faint: #80858b;
@@ -553,7 +553,7 @@
     --gr-surface-sunken: #dbdde3;
     --gr-line: #c1c6d4;
     --gr-line-strong: #b3b6bc;
-    --gr-control-edge: #92959b;
+    --gr-control-edge: #7d8086;
     --gr-ink: #1f2329;
     --gr-ink-muted: #595d63;
     --gr-ink-faint: #82858b;
@@ -577,7 +577,7 @@
   --gr-surface-sunken: #dbdde3;
   --gr-line: #c1c6d4;
   --gr-line-strong: #b3b6bc;
-  --gr-control-edge: #92959b;
+  --gr-control-edge: #7d8086;
   --gr-ink: #1f2329;
   --gr-ink-muted: #595d63;
   --gr-ink-faint: #82858b;
@@ -624,7 +624,7 @@
     --gr-surface-sunken: #d8dfe2;
     --gr-line: #bbcbd0;
     --gr-line-strong: #b1b7bb;
-    --gr-control-edge: #8f9599;
+    --gr-control-edge: #7c8186;
     --gr-ink: #1f2329;
     --gr-ink-muted: #585d62;
     --gr-ink-faint: #80868a;
@@ -648,7 +648,7 @@
   --gr-surface-sunken: #d8dfe2;
   --gr-line: #bbcbd0;
   --gr-line-strong: #b1b7bb;
-  --gr-control-edge: #8f9599;
+  --gr-control-edge: #7c8186;
   --gr-ink: #1f2329;
   --gr-ink-muted: #585d62;
   --gr-ink-faint: #80868a;

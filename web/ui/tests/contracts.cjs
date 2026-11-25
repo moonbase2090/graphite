@@ -21,6 +21,13 @@ function valueFor(selector, role) {
 }
 
 const tokens = fs.readFileSync(path.join(root, "web/tokens/graphite-tokens.css"), "utf8");
+const catalog = fs.readFileSync(path.join(__dirname, "../theme-catalog.js"), "utf8");
+const bootstrap = fs.readFileSync(path.join(__dirname, "../theme-bootstrap.js"), "utf8");
+const catalogIds = [...catalog.matchAll(/\["([a-z0-9-]+)",\s*"[^"]+"\]/g)].map(([, id]) => id);
+const bootstrapIds = /const themes = (\[[^;]+\]);/.exec(bootstrap)?.[1];
+if (!bootstrapIds || JSON.stringify(catalogIds) !== JSON.stringify(JSON.parse(bootstrapIds))) {
+  throw new Error("theme-bootstrap.js theme IDs must stay aligned with theme-catalog.js");
+}
 
 (async () => {
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
@@ -48,6 +55,34 @@ const tokens = fs.readFileSync(path.join(root, "web/tokens/graphite-tokens.css")
         }
       }
     }
+
+    const delayedGallery = await browser.newPage({ colorScheme: "dark" });
+    await delayedGallery.addInitScript(() => {
+      localStorage.setItem("graphite.gallery.theme", JSON.stringify({ theme: "forest-mint", scheme: "light" }));
+      new PerformanceObserver(entries => {
+        for (const entry of entries.getEntries()) {
+          if (entry.name === "first-contentful-paint") {
+            window.__firstPaintTheme = document.documentElement.dataset.theme;
+            window.__firstPaintScheme = document.documentElement.dataset.scheme;
+          }
+        }
+      }).observe({ type: "paint", buffered: true });
+    });
+    await delayedGallery.route("**/web/ui/theme-bootstrap.js", async route => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await route.continue();
+    });
+    await delayedGallery.route("**/web/ui/gallery.js", async route => {
+      await new Promise(resolve => setTimeout(resolve, 900));
+      await route.continue();
+    });
+    await delayedGallery.goto(`http://127.0.0.1:${port}/web/ui/gallery.html`);
+    const firstPaintTheme = await delayedGallery.evaluate(() => [window.__firstPaintTheme, window.__firstPaintScheme]);
+    if (firstPaintTheme[0] !== "forest-mint" || firstPaintTheme[1] !== "light") {
+      console.error("gallery first paint did not use saved theme", firstPaintTheme);
+      failures++;
+    }
+    await delayedGallery.close();
 
     const page = await browser.newPage();
     await page.goto(`http://127.0.0.1:${port}/web/ui/README.md`);
@@ -121,7 +156,7 @@ const tokens = fs.readFileSync(path.join(root, "web/tokens/graphite-tokens.css")
     }
     await browser.close();
     if (failures) process.exitCode = 1;
-    else console.log("Theme matrix (24 cases) and field AX name/description passed.");
+    else console.log("Theme matrix (24 cases), pre-paint bootstrap, and field AX name/description passed.");
   } finally {
     server.close();
   }
