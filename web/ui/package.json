@@ -1,0 +1,23 @@
+{
+  "name": "@moonbase2090/graphite-ui",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "repository": "github:moonbase2090/graphite",
+  "files": ["*.js", "*.css", "*.html", "README.md"],
+  "scripts": { "test:browser": "node tests/contracts.cjs playwright" },
+  "devDependencies": { "playwright": "1.61.1" },
+  "exports": {
+    ".": "./index.js",
+    "./button": "./button.js",
+    "./dialog": "./dialog.js",
+    "./field": "./field.js",
+    "./icon": "./icon.js",
+    "./navigation": "./navigation.js",
+    "./theme-menu": "./theme-menu.js",
+    "./theme-init": "./theme-init.js",
+    "./theme-catalog": "./theme-catalog.js",
+    "./components.css": "./components.css",
+    "./tokens.css": "./tokens.css"
+  }
+}

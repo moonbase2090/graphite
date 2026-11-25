@@ -1,3 +1,6 @@
 /target/
+**/target/
+**/node_modules/
+.sc/
 __pycache__/
 *.pyc

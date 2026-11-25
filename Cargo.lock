@@ -254,6 +254,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphite-css"
+version = "0.1.0"
+dependencies = [
+ "graphite-core",
+]
+
+[[package]]
 name = "graphite-tui"
 version = "0.1.7"
 dependencies = [
