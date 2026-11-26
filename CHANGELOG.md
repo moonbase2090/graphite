@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- No changes since 0.1.7.
+- Add the `graphite-css` token generator, prefixed web roles, shared JavaScript controls and navigation, and the excluded `graphite-dioxus` components for web apps. The generated theme sheet follows app theme/scheme choices and derives control borders to meet 3:1 contrast.
 
 ## [0.1.7] - 2026-11-04
 

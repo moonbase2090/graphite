@@ -1,0 +1,10 @@
+[package]
+name = "graphite-css"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT"
+publish = false
+
+[dependencies]
+graphite-core = { path = "..", features = ["motion"] }

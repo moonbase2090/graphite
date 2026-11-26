@@ -1,0 +1,25 @@
+[package]
+name = "graphite-dioxus"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT"
+publish = false
+
+[workspace]
+
+[features]
+browser-test = []
+
+[[bin]]
+name = "browser-contract"
+path = "src/bin/browser-contract.rs"
+required-features = ["browser-test"]
+
+[dependencies]
+dioxus = { version = "0.6", features = ["web"] }
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlElement", "HtmlDialogElement"] }
+
+[dev-dependencies]
+dioxus-ssr = "0.6"

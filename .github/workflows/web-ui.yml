@@ -1,0 +1,57 @@
+name: Web UI
+
+on:
+  pull_request:
+    paths:
+      - 'graphite-css/**'
+      - 'graphite-dioxus/**'
+      - 'web/**'
+      - '.github/workflows/web-ui.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'graphite-css/**'
+      - 'graphite-dioxus/**'
+      - 'web/**'
+      - '.github/workflows/web-ui.yml'
+
+jobs:
+  tokens-and-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --workspace
+      - run: cargo run -p graphite-css -- --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/ui/package-lock.json
+      - run: npm ci
+        working-directory: web/ui
+      - run: npx playwright install --with-deps chromium
+        working-directory: web/ui
+      - run: npm run test:browser
+        working-directory: web/ui
+
+  dioxus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.88.0
+          targets: wasm32-unknown-unknown
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/ui/package-lock.json
+      - run: npm ci
+        working-directory: web/ui
+      - run: npx playwright install --with-deps chromium
+        working-directory: web/ui
+      - run: cargo install wasm-bindgen-cli --version 0.2.130 --locked
+      - run: cargo test --manifest-path graphite-dioxus/Cargo.toml
+      - run: bash graphite-dioxus/scripts/test-browser.sh
