@@ -1,6 +1,7 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
+const { trackCoverage } = require("./browser-coverage.cjs");
 
 const { chromium } = require(process.argv[2]);
 const root = path.resolve(__dirname, "../../..");
@@ -32,6 +33,7 @@ if (!bootstrapIds || JSON.stringify(catalogIds) !== JSON.stringify(JSON.parse(bo
 (async () => {
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   const browser = await chromium.launch({ headless: true });
+  const writeCoverage = trackCoverage(browser, root);
   try {
     const port = server.address().port;
     let failures = 0;
@@ -141,6 +143,77 @@ if (!bootstrapIds || JSON.stringify(catalogIds) !== JSON.stringify(JSON.parse(bo
     const confirmed = await page.evaluate(() => window.__confirmed);
     if (remainingDialogs !== 0 || !confirmed) { console.error("dialog did not confirm and close", { remainingDialogs, confirmed, state: await page.locator("dialog").evaluate(d => ({ open: d.open, value: d.returnValue, html: d.outerHTML })) }); failures++; }
 
+    const edges = await page.evaluate(async () => {
+      const { button, field, icon, initializeTheme, roomList, themeMenu } = await import("/web/ui/index.js");
+      const thrown = run => { try { run(); return null; } catch (error) { return error instanceof TypeError ? error.message : String(error); } };
+      const input = document.createElement("input");
+      input.setAttribute("aria-describedby", "stale");
+      input.setAttribute("aria-invalid", "true");
+      field({ id: "plain", label: "Plain", control: input });
+      const select = document.createElement("select");
+      field({ id: "pick", label: "Pick", control: select });
+      const selected = [];
+      const rooms = roomList([{ id: "a", label: "A" }, { id: "b", label: "B", href: "/b" }], "b", room => selected.push(room.id));
+      document.body.replaceChildren(rooms);
+      const first = rooms.querySelector("a");
+      const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+      first.dispatchEvent(click);
+      initializeTheme("broken", "mono-sand", { getItem: () => { throw new Error("denied"); } });
+      const brokenStorageTheme = document.documentElement.dataset.theme;
+      const brokenStorageScheme = document.documentElement.dataset.scheme ?? null;
+      const menu = themeMenu({ storageKey: "outside", storage: null });
+      const outside = document.createElement("p");
+      document.body.replaceChildren(menu, outside);
+      menu.open = true;
+      outside.click();
+      const outsideClosed = !menu.open;
+      for (const value of ["dark", "system"]) {
+        const radio = menu.querySelector(`input[name="gr-scheme"][value="${value}"]`);
+        radio.checked = true;
+        radio.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      const systemScheme = document.documentElement.dataset.scheme ?? null;
+      return {
+        variant: thrown(() => button("X", null, "link")),
+        icon: thrown(() => icon("nope")),
+        missing: thrown(() => field({ id: "x", label: "X" })),
+        describedBy: input.getAttribute("aria-describedby"),
+        invalid: input.getAttribute("aria-invalid"),
+        selectClass: select.className,
+        firstHref: first.getAttribute("href"),
+        selected, prevented: click.defaultPrevented,
+        brokenStorageTheme, brokenStorageScheme, outsideClosed, systemScheme,
+      };
+    });
+    const expectedEdges = {
+      variant: "Unknown button variant: link",
+      icon: "Unknown Graphite icon: nope",
+      missing: "id, label, and control are required",
+      describedBy: null, invalid: null, selectClass: "gr-select", firstHref: "#",
+      selected: ["a"], prevented: true,
+      brokenStorageTheme: "mono-sand", brokenStorageScheme: null, outsideClosed: true, systemScheme: null,
+    };
+    if (JSON.stringify(edges) !== JSON.stringify(expectedEdges)) { console.error("component edge mismatch", edges); failures++; }
+
+    const legacyGallery = await browser.newPage({ colorScheme: "dark" });
+    // Stub the gallery module so only the blocking bootstrap sets the theme.
+    await legacyGallery.route("**/web/ui/gallery.js", route => route.fulfill({ contentType: "text/javascript", body: "" }));
+    await legacyGallery.addInitScript(() => {
+      if (!sessionStorage.getItem("seeded")) {
+        sessionStorage.setItem("seeded", "1");
+        localStorage.setItem("graphite.gallery.theme", "mono-sand");
+      }
+    });
+    await legacyGallery.goto(`http://127.0.0.1:${port}/web/ui/gallery.html`);
+    const legacy = await legacyGallery.evaluate(() => [document.documentElement.dataset.theme, document.documentElement.dataset.scheme ?? null]);
+    await legacyGallery.evaluate(() => localStorage.setItem("graphite.gallery.theme", "{\"theme\":\"retired\"}"));
+    await legacyGallery.reload();
+    const retired = await legacyGallery.evaluate(() => [document.documentElement.dataset.theme, document.documentElement.dataset.scheme ?? null]);
+    if (JSON.stringify([legacy, retired]) !== JSON.stringify([["mono-sand", null], ["graphite", null]])) {
+      console.error("gallery bootstrap fallback mismatch", { legacy, retired }); failures++;
+    }
+    await legacyGallery.close();
+
     const shotDir = process.env.GRAPHITE_GALLERY_SHOTS;
     if (shotDir) fs.mkdirSync(shotDir, { recursive: true });
     for (const [scheme, theme] of [["dark", "graphite"], ["light", "forest-mint"]]) {
@@ -154,6 +227,7 @@ if (!bootstrapIds || JSON.stringify(catalogIds) !== JSON.stringify(JSON.parse(bo
       if (shotDir) await gallery.screenshot({ path: path.join(shotDir, `graphite-ui-${theme}-${scheme}.png`), fullPage: true });
       await gallery.close();
     }
+    await writeCoverage();
     await browser.close();
     if (failures) process.exitCode = 1;
     else console.log("Theme matrix (24 cases), pre-paint bootstrap, and field AX name/description passed.");

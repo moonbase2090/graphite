@@ -490,6 +490,27 @@ mod tests {
     }
 
     #[test]
+    fn seeded_themes_match_the_web_catalog() {
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../web/ui/theme-catalog.js");
+        let catalog = std::fs::read_to_string(path).unwrap();
+        let entries = catalog.split("export const themeIds").next().unwrap();
+        let web: Vec<&str> = entries
+            .split("[\"")
+            .skip(1)
+            .filter_map(|entry| entry.split('"').next())
+            .collect();
+        let mut rust = vec!["graphite", "indigo"];
+        rust.extend(themes().iter().map(|seed| seed.id));
+        assert_eq!(web, rust);
+        for id in &rust {
+            assert!(palette(id, ThemeVariant::Dark).is_some(), "{id} dark");
+            assert!(palette(id, ThemeVariant::Light).is_some(), "{id} light");
+        }
+        assert!(palette("not-a-theme", ThemeVariant::Dark).is_none());
+    }
+
+    #[test]
     fn every_exported_theme_meets_text_and_control_contrast() {
         for theme in [
             "graphite",
