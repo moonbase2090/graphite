@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": "github:moonbase2090/graphite",
   "files": ["*.js", "*.css", "*.html", "README.md"],
-  "scripts": { "test:browser": "node tests/contracts.cjs playwright" },
+  "scripts": { "test": "node tests/contracts.cjs playwright", "test:browser": "node tests/contracts.cjs playwright" },
   "devDependencies": { "playwright": "1.61.1" },
   "exports": {
     ".": "./index.js",
